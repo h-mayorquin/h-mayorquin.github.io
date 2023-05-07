@@ -1,37 +1,76 @@
+* Reset some default browser styles */
+body, h1, h2, h3, h4, h5, h6, p, ul, li {
+  margin: 0;
+  padding: 0;
+}
+
 body {
   font-family: Arial, sans-serif;
   line-height: 1.6;
-  color: #333;
-  margin: 0;
+  background-color: #f4f4f4;
+  color:#666666;
 }
 
 header {
-  background: #f4f4f4;
-  padding: 1.5rem 0;
-  text-align: center;
+  background-color:#666666;
+  padding: 1rem 0;
 }
 
 header h1 {
-  margin: 0;
-  padding-bottom: 0.5rem;
-}
-
-footer {
-  background: #f4f4f4;
-  padding: 1.5rem 0;
+  color: #fff;
+  font-size: 2rem;
   text-align: center;
 }
 
+main {
+  padding: 2rem;
+}
+
+nav {
+  display: flex;
+  justify-content: space-around;
+  background-color: #666666;
+  padding: 1rem 0;
+  margin-bottom: 2rem;
+}
+
+nav a {
+  color: #fff;
+  text-decoration: none;
+}
+
+footer {
+  background-color:#666666;
+  padding: 1rem 0;
+  text-align: center;
+  color: #fff;
+}
+
+/* Blog styles */
 .posts {
-  list-style-type: none;
-  padding: 0;
+  list-style: none;
 }
 
 .posts li {
   margin-bottom: 1rem;
+  background-color: #fff;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .post-date {
-  color: #999;
-  margin-right: 1rem;
+  color: #888;
+  font-size: 0.8rem;
+  margin-bottom: 0.5rem;
+  display: block;
+}
+
+.post-link {
+  color: #333;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.post-link:hover {
+  color: #888;
 }
