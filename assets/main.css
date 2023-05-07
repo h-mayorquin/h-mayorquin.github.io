@@ -1,62 +1,37 @@
----
-# Only the main Sass file needs front matter (the dashes are enough)
----
-
-@import "{{ site.theme }}";
-
-.post img {
-        display: block;
-        border:1px solid #021a40;
-        vertical-align: top;
-        margin-left: auto;
-        margin-right: auto;
+body {
+  font-family: Arial, sans-serif;
+  line-height: 1.6;
+  color: #333;
+  margin: 0;
 }
 
-.post figcaption {
+header {
+  background: #f4f4f4;
+  padding: 1.5rem 0;
   text-align: center;
-  font-size: .8rem;
-  font-style: italic;
-  color: light-grey;
 }
 
-.language-python { border-left: 1px solid lightcoral; }
-
-.language-python + .language-plaintext {
-        border-left: 1px solid grey;
-        margin-left: 1rem !important;
-}
-.language-python + .language-plaintext code { background-color: white !important; }
-.language-python + .language-plaintext pre  { background-color: white !important; }
-
-// for Jupyter Notebook HTML Code Cells from https://www.fast.ai/public/css/hyde.css
-
-.input_area pre, .input_area div {
-        margin-bottom:0.1rem !important;
-        margin-top:0.1rem !important;
-        padding-bottom:0 !important;
-        padding-top:0 !important;
-}
-.output_area pre, .output_area div {
-        margin-bottom:0.1rem !important;
-        margin-top:0.1rem !important;
-        padding-bottom:0 !important;
-        padding-top:0 !important;
-        background-color: white !important;
-}
-.input_area pre {
-        border-left: 1px solid lightcoral;
-}
-.output_area pre {
-        border-left: 1px solid grey;
-        margin-left: 1rem !important;
-}
-.codecell {
-        border-right: 2px solid lightgrey;
-        margin-bottom:1rem !important;
-        margin-top:1rem !important;
-        padding-bottom:0 !important;
-        padding-top:0 !important;
+header h1 {
+  margin: 0;
+  padding-bottom: 0.5rem;
 }
 
-.codecell table { width: auto; }
+footer {
+  background: #f4f4f4;
+  padding: 1.5rem 0;
+  text-align: center;
+}
 
+.posts {
+  list-style-type: none;
+  padding: 0;
+}
+
+.posts li {
+  margin-bottom: 1rem;
+}
+
+.post-date {
+  color: #999;
+  margin-right: 1rem;
+}
