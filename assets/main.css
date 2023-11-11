@@ -1,4 +1,3 @@
-/* Reset some default browser styles */
 body, h1, h2, h3, h4, h5, h6, p, ul, li {
   margin: 0;
   padding: 0;
@@ -10,33 +9,34 @@ body {
   line-height: 1.6;
   background-color: #f9f9f9;
   color: #333;
-  padding: 0 10vw; /* Responsive padding */
+  padding: 0 5vw;
 }
 
 header {
-  background-color: #2d2d2d; /* Dark gray for header */
-  color: #fff; /* White text for contrast */
-  padding: 2rem 0;
+  background-color: #2d2d2d;
+  color: #fff;
+  padding: 2rem 5vw;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 header h1 {
   font-size: 2.5rem;
   text-align: center;
-  font-weight: normal;
+  font-weight: 300;
 }
 
 main {
-  padding: 2rem 0;
+  padding: 2rem 5vw;
   background-color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+  margin: 2rem auto;
+  max-width: 60rem;
 }
 
 nav {
   display: flex;
   justify-content: space-around;
-  background-color: #333; /* Darker shade for navigation */
+  background-color: #333;
   padding: 1rem 0;
 }
 
@@ -47,13 +47,12 @@ nav a {
 }
 
 footer {
-  background-color: #2d2d2d; /* Matching dark gray for footer */
-  color: #fff; /* White text for contrast */
-  padding: 1rem 0;
+  background-color: #2d2d2d;
+  color: #fff;
+  padding: 1rem 5vw;
   text-align: center;
 }
 
-/* Blog styles */
 .posts {
   list-style: none;
 }
@@ -69,33 +68,28 @@ footer {
   color: #888;
   font-size: 0.9rem;
   margin-bottom: 1rem;
-  display: block;
 }
 
 .post-link {
-  color: #333; /* Dark text for links to match body text */
+  color: #333;
   font-weight: bold;
   text-decoration: none;
 }
 
 .post-link:hover {
-  color: #555; /* Lighter gray on hover */
+  color: #555;
 }
 
-/* Add this to your CSS to remove underlines from code elements */
 code, pre {
   text-decoration: none;
 }
 
-/* Ensure that Prism styles take precedence */
 code[class*="language-"],
 pre[class*="language-"] {
-  color: #dcdcdc !important; /* For light text */
-  background: #2d2d2d !important; /* For dark background */
-  text-shadow: none !important;
-  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace !important;
+  color: #dcdcdc;
+  background: #2d2d2d;
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
   border-radius: 0.3em;
-  border: none;
 }
 
 pre[class*="language-"] {
