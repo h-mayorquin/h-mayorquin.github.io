@@ -7,16 +7,19 @@ fetch('posts.json')
     posts.forEach(post => {
       const listItem = document.createElement('li');
       
-      // Check if the date is valid and in the expected format
-      const postDate = isNaN(Date.parse(post.date)) ? new Date() : new Date(post.date);
+      // Ensure date is in the correct format
+      const postDate = new Date(post.date + 'T00:00:00'); // Add time part to avoid timezone issues
       const formattedDate = postDate.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
       });
 
+      // Check for "Invalid Date" and handle it
+      const dateDisplay = formattedDate === 'Invalid Date' ? 'Unknown Date' : formattedDate;
+
       listItem.innerHTML = `
-        <span class="post-date">${formattedDate}</span>
+        <span class="post-date">${dateDisplay}</span>
         <a class="post-link" href="${post.url}">${post.title}</a>
       `;
 
@@ -27,5 +30,4 @@ fetch('posts.json')
   })
   .catch(error => {
     console.error('Error loading post list:', error);
-    // Handle the error, perhaps by showing a user-friendly message
   });
