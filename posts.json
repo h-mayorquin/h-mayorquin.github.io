@@ -1,10 +1,12 @@
 [
     {
-        "title": "2020 01 14 First Post Title",
-        "url": "./posts/2020-01-14-first-post-title.html"
+        "title": "First Post Title",
+        "url": "./posts/2020-01-14-first-post-title.html",
+        "date": "2020-01-14"
     },
     {
-        "title": "2023 11 11 Confused About Numpy Pickling",
-        "url": "./posts/2023-11-11-confused-about-numpy-pickling.html"
+        "title": "Confused About Numpy Pickling",
+        "url": "./posts/2023-11-11-confused-about-numpy-pickling.html",
+        "date": "2023-11-11"
     }
 ]

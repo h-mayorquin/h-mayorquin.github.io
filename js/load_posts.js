@@ -6,7 +6,9 @@ fetch('posts.json')
 
     posts.forEach(post => {
       const listItem = document.createElement('li');
-      const postDate = new Date(post.date);
+      
+      // Check if the date is valid and in the expected format
+      const postDate = isNaN(Date.parse(post.date)) ? new Date() : new Date(post.date);
       const formattedDate = postDate.toLocaleDateString('en-US', {
         year: 'numeric',
         month: 'short',
@@ -22,4 +24,8 @@ fetch('posts.json')
     });
 
     document.getElementById('posts').appendChild(postsList);
+  })
+  .catch(error => {
+    console.error('Error loading post list:', error);
+    // Handle the error, perhaps by showing a user-friendly message
   });
