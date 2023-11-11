@@ -13,10 +13,10 @@ def print_memory_usage(message):
     print(f"Resident memory: {rss / (1024 ** 3):2.2f} GiB")
 
 if __name__ == "__main__":
-    protcol = 4
+    protcol = 5
 
     print_memory_usage(f"Pickling using protocol {protcol}")
-    # Create a vector of 3 GiB with int16
+    # Create a vector of 3 GiB with int8
     size = 3
     dtype = np.int8
     random_vector = np.random.randint(0, 127 , size=size * 1024 ** 3, dtype=dtype)
