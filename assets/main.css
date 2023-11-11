@@ -4,6 +4,10 @@ body, h1, h2, h3, h4, h5, h6, p, ul, li {
   box-sizing: border-box;
 }
 
+p {
+  margin-bottom: 16px; /* Adjust the value as needed */
+}
+
 body {
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;

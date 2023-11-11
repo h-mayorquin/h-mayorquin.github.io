@@ -13,7 +13,7 @@ def print_memory_usage(message):
     print(f"Resident memory: {rss / (1024 ** 3):2.2f} GiB")
 
 if __name__ == "__main__":
-    protcol = 5
+    protcol = 4
 
     print_memory_usage(f"Pickling using protocol {protcol}")
     # Create a vector of 3 GiB with int16
