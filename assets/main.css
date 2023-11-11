@@ -1,49 +1,56 @@
-* Reset some default browser styles */
+/* Reset some default browser styles */
 body, h1, h2, h3, h4, h5, h6, p, ul, li {
   margin: 0;
   padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   line-height: 1.6;
-  background-color: #f4f4f4;
+  background-color: #f9f9f9;
   color: #333;
+  padding: 0 10vw; /* Responsive padding */
 }
 
 header {
-  background-color: #333;
-  padding: 1rem 0;
+  background-color: #2d2d2d; /* Dark gray for header */
+  color: #fff; /* White text for contrast */
+  padding: 2rem 0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 header h1 {
-  color: #fff;
-  font-size: 2rem;
+  font-size: 2.5rem;
   text-align: center;
+  font-weight: normal;
 }
 
 main {
-  padding: 2rem;
+  padding: 2rem 0;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
 }
 
 nav {
   display: flex;
   justify-content: space-around;
-  background-color: #333;
+  background-color: #333; /* Darker shade for navigation */
   padding: 1rem 0;
-  margin-bottom: 2rem;
 }
 
 nav a {
   color: #fff;
   text-decoration: none;
+  font-weight: 500;
 }
 
 footer {
-  background-color: #333;
+  background-color: #2d2d2d; /* Matching dark gray for footer */
+  color: #fff; /* White text for contrast */
   padding: 1rem 0;
   text-align: center;
-  color: #fff;
 }
 
 /* Blog styles */
@@ -54,23 +61,51 @@ footer {
 .posts li {
   margin-bottom: 1rem;
   background-color: #fff;
-  padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .post-date {
   color: #888;
-  font-size: 0.8rem;
-  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
   display: block;
 }
 
 .post-link {
-  color: #333;
+  color: #333; /* Dark text for links to match body text */
   font-weight: bold;
   text-decoration: none;
 }
 
 .post-link:hover {
-  color: #888;
+  color: #555; /* Lighter gray on hover */
+}
+
+/* Add this to your CSS to remove underlines from code elements */
+code, pre {
+  text-decoration: none;
+}
+
+/* Ensure that Prism styles take precedence */
+code[class*="language-"],
+pre[class*="language-"] {
+  color: #dcdcdc !important; /* For light text */
+  background: #2d2d2d !important; /* For dark background */
+  text-shadow: none !important;
+  font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace !important;
+  border-radius: 0.3em;
+  border: none;
+}
+
+pre[class*="language-"] {
+  padding: 1em;
+  margin: 1em 0;
+  overflow: auto;
+  font-size: 0.95em;
+}
+
+:not(pre) > code[class*="language-"] {
+  padding: 0.2em 0.4em;
+  border-radius: 0.3em;
 }
