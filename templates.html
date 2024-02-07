@@ -5,31 +5,49 @@
     <title>Interactive Template Visualization with Python Code</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
         #loader {
             text-align: center;
             padding: 20px;
             display: none;
         }
         #code-container {
-            background-color: #f4f4f4;
-            padding: 10px;
-            margin-bottom: 20px;
+            background-color: #1e1e1e; /* Dark background */
             border-radius: 5px;
-            border: 1px solid #ddd;
+            border: 1px solid #555;
+            padding: 20px;
+            margin-bottom: 20px;
+            overflow-x: auto;
         }
-        pre {
-            white-space: pre-wrap;       /* Since CSS 2.1 */
-            white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
-            white-space: -pre-wrap;      /* Opera 4-6 */
-            white-space: -o-pre-wrap;    /* Opera 7 */
-            word-wrap: break-word;       /* Internet Explorer 5.5+ */
+        code[class*="language-"],
+        pre[class*="language-"] {
+            color: #dcdcdc; /* Light font color for high contrast */
+            background: none; /* Ensure no overriding background */
+            font-family: 'Fira Code', Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+            font-size: 16px; /* Slightly larger font for readability */
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.2); /* Soft glow for better legibility */
+            border-radius: 0.3em;
+            padding: 0.5em;
+            line-height: 1.5;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); /* Subtle shadow for depth */
+        }
+        /* Override specific for code inside pre */
+        pre[class*="language-"] > code {
+            background: none; /* Ensure code inside pre has no additional background */
+            padding: 0; /* Remove padding to maintain consistent layout */
+            font-size: inherit; /* Ensure font size consistency */
+            line-height: inherit; /* Ensure line height consistency */
         }
     </style>
 </head>
 <body>
 
 <div id="code-container">
-    <pre id="python-code">Generating Python code...</pre>
+    <pre class="language-python"><code id="python-code" class="language-python">
+# Python code snippet will be dynamically inserted here
+    </code></pre>
 </div>
 
 <div id="plots-container"></div>
@@ -43,14 +61,12 @@
     const templatesToLoad = 5; // Number of templates to load per batch
     let selectedUnitIndices = []; // Initialize outside of loadData function
 
-    // Function to update Python code snippet
     function updatePythonCode() {
-        const pythonCodeTemplate = `from spikeinterface.hybrid import generate_recording_from_template_database
-selected_unit_indices = ${JSON.stringify(selectedUnitIndices)}
-durations = [1.0]  # Specify the duration for each template
-recording = generate_recording_from_template_database(selected_unit_indices, durations=durations)`;
+        const selectedUnitIndicesString = JSON.stringify(selectedUnitIndices);
+        const pythonCodeTemplate = `from spikeinterface.hybrid import generate_recording_from_template_database\nselected_unit_indices = ${selectedUnitIndicesString}\ndurations = [1.0]  # Specify the duration for each template\nrecording = generate_recording_from_template_database(selected_unit_indices, durations=durations)`;
         document.getElementById('python-code').textContent = pythonCodeTemplate;
     }
+
 
     // Initial call to display Python code with empty selectedUnitIndices
     updatePythonCode();
