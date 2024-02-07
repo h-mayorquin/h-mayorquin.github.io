@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Interactive Template Visualization</title>
+    <title>Interactive Template Visualization with Python Code</title>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         #loader {
@@ -10,9 +10,27 @@
             padding: 20px;
             display: none;
         }
+        #code-container {
+            background-color: #f4f4f4;
+            padding: 10px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+        pre {
+            white-space: pre-wrap;       /* Since CSS 2.1 */
+            white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
+            white-space: -pre-wrap;      /* Opera 4-6 */
+            white-space: -o-pre-wrap;    /* Opera 7 */
+            word-wrap: break-word;       /* Internet Explorer 5.5+ */
+        }
     </style>
 </head>
 <body>
+
+<div id="code-container">
+    <pre id="python-code">Generating Python code...</pre>
+</div>
 
 <div id="plots-container"></div>
 <div id="loader">Loading...</div>
@@ -24,6 +42,19 @@
     let isLoading = false; // Flag to prevent multiple simultaneous loads
     const templatesToLoad = 5; // Number of templates to load per batch
     let selectedUnitIndices = []; // Initialize outside of loadData function
+
+    // Function to update Python code snippet
+    function updatePythonCode() {
+        const pythonCodeTemplate = `from spikeinterface.hybrid import generate_recording_from_template_database
+selected_unit_indices = ${JSON.stringify(selectedUnitIndices)}
+durations = [1.0]  # Specify the duration for each template
+recording = generate_recording_from_template_database(selected_unit_indices, durations=durations)`;
+        document.getElementById('python-code').textContent = pythonCodeTemplate;
+    }
+
+    // Initial call to display Python code with empty selectedUnitIndices
+    updatePythonCode();
+
 
     async function loadData() {
         if (isLoading) return;
@@ -123,7 +154,7 @@
                 }
             ],
             layout: {
-                title: `Template for unit index: ${unit_index} - on channel with index: ${bestChannel} - at location: (${locationX}, ${locationY})`,
+                title: `Template for unit index: ${unit_index} - on channel with index: ${bestChannel} - at location: (x=${locationX}, y=${locationY})`,
                 grid: {rows: 1, columns: 2, pattern: 'independent'},
                 xaxis1: {title: 'Time (samples)'},
                 yaxis1: {title: 'Amplitude (uV)'},
@@ -134,7 +165,7 @@
                 yaxis2: {
                     title: 'Y Location',
                     anchor: 'x2',
-                    scale: 0.5,
+                    scale: 0.25,
                 },
                 annotations: [
                     {
@@ -169,6 +200,7 @@
                 }
             }
             console.log("Selected templates:", selectedUnitIndices);
+            updatePythonCode();
         };
         plotDiv.appendChild(checkbox);
 }
