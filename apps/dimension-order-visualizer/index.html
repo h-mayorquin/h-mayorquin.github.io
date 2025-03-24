@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dimension Order Visualizer - Heberto Mayorquin</title>
+  <link rel="stylesheet" href="../../assets/main.css">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- React and Babel -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <header>
+    <h1>Heberto Mayorquin</h1>
+  </header>
+  <main>
+    <nav>
+      <a href="../../index.html">Home</a>
+      <a href="../../about.html">About Me</a>
+      <a href="../../blog.html">Blog</a>
+      <a href="../index.html">Apps</a>
+    </nav>
+    
+    <h2 style="margin-top: 2rem; margin-bottom: 1rem;">Microscopy Dimension Order Visualizer</h2>
+    
+    <div id="root"></div>
+    
+    <script type="text/babel">
+      const DimensionOrderVisualizer = () => {
+        const [dimensionOrder, setDimensionOrder] = React.useState('ZTC');
+        const [sequence, setSequence] = React.useState([]);
+        
+        // Fixed parameters as requested
+        const zSize = 3;  // 3 depth planes
+        const cSize = 2;  // 2 channels
+        const tSize = 4;  // 4 timepoints
+        
+        // Colors for the two channels
+        const channelColors = ['#4ecdc4', '#ff6b6b'];
+        const channelNames = ['0', '1']; // Simplified channel names
+        
+        // Generate the sequence based on dimension order
+        React.useEffect(() => {
+          const generateSequence = () => {
+            let result = [];
+            
+            // Properly parse the dimension order
+            // In ZTC, Z is fastest, T is medium, C is slowest
+            // This means we loop in the opposite order: C, then T, then Z
+            const order = dimensionOrder.split('');
+            const loopOrder = [...order].reverse();
+            
+            let index = 0;
+            
+            // Helper function to create frames for each dimension combination
+            const generateFrames = (indices = {}, level = 0) => {
+              if (level === order.length) {
+                // We have all dimensions, add a frame to the result
+                result.push({
+                  z: indices.Z,
+                  c: indices.C,
+                  t: indices.T,
+                  index: index++
+                });
+                return;
+              }
+              
+              const dimension = loopOrder[level];
+              const size = dimension === 'Z' ? zSize : dimension === 'C' ? cSize : tSize;
+              
+              for (let i = 0; i < size; i++) {
+                const newIndices = { ...indices };
+                newIndices[dimension] = i;
+                generateFrames(newIndices, level + 1);
+              }
+            };
+            
+            generateFrames();
+            
+            return result;
+          };
+          
+          setSequence(generateSequence());
+        }, [dimensionOrder]);
+        
+        // Calculate frame size
+        const frameSize = 60; // Original size
+        const xSpacing = 70; // Original spacing
+        
+        // State for slider
+        const [visibleFrames, setVisibleFrames] = React.useState(8); // Reduced number of visible frames
+        const [startFrame, setStartFrame] = React.useState(0);
+        
+        // Function to handle slider change
+        const handleSliderChange = (e) => {
+          setStartFrame(parseInt(e.target.value, 10));
+        };
+        
+        // Calculate max start frame
+        const maxStartFrame = Math.max(0, sequence.length - visibleFrames);
+        
+        // Get visible frames only
+        const visibleSequence = sequence.slice(startFrame, startFrame + visibleFrames);
+        
+        return (
+          <div className="p-6 max-w-6xl mx-auto">
+            <h1 className="text-3xl font-bold mb-6 text-center">Microscopy Dimension Order Visualizer</h1>
+            
+            <div className="mb-6">
+              <label className="block text-lg font-medium mb-2">Dimension Order:</label>
+              <div className="flex gap-2 flex-wrap">
+                {['ZTC', 'ZCT', 'TZC', 'TCZ', 'CZT', 'CTZ'].map(order => (
+                  <button
+                    key={order}
+                    onClick={() => setDimensionOrder(order)}
+                    className={`px-4 py-2 rounded ${dimensionOrder === order 
+                      ? 'bg-blue-600 text-white font-bold' 
+                      : 'bg-gray-200 hover:bg-gray-300'}`}
+                  >
+                    {order}
+                  </button>
+                ))}
+              </div>
+            </div>
+            
+            <div className="mb-6 p-4 bg-gray-100 rounded">
+              <h2 className="text-xl font-bold mb-3">How to Read This Visualization</h2>
+              <div className="grid grid-cols-1 gap-4">
+                <div>
+                  <p className="mb-2"><span className="font-bold">Z-axis (depth):</span> Vertical position (3 planes)</p>
+                  <p className="mb-2"><span className="font-bold">Sample order:</span> Left to right progression</p>
+                  <p className="mb-2"><span className="font-bold">Channel:</span> Color of the squares</p>
+                  <div className="mt-2 flex gap-4 mb-2">
+                    {channelNames.map((name, i) => (
+                      <div key={i} className="flex items-center">
+                        <div 
+                          className="w-5 h-5 rounded mr-2" 
+                          style={{backgroundColor: channelColors[i]}}
+                        ></div>
+                        <span>Channel {i}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mb-2"><span className="font-bold">Timepoints:</span> T0-T3 (shown in bottom right of each square)</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="border rounded p-6 bg-white">
+              <h2 className="text-xl font-bold mb-4">Acquisition Sequence: {dimensionOrder}</h2>
+              
+              <div className="mb-6">
+                {dimensionOrder === 'ZTC' && (
+                  <p>This pattern completes all Z-planes for one timepoint, then moves to the next timepoint, and finally switches to the next channel. This minimizes channel switching during a complete time series.</p>
+                )}
+                {dimensionOrder === 'ZCT' && (
+                  <p>This pattern completes all Z-planes for one channel, then switches to the next channel, and finally moves to the next timepoint. This minimizes timepoint switching for each volume.</p>
+                )}
+                {dimensionOrder === 'TZC' && (
+                  <p>This pattern completes all timepoints for one Z-plane, then moves to the next Z-plane, and finally switches to the next channel. This optimizes for time series at each depth.</p>
+                )}
+                {dimensionOrder === 'TCZ' && (
+                  <p>This pattern completes all timepoints for one channel, then switches to the next channel, and finally changes Z-planes. This prioritizes temporal resolution over volumetric data.</p>
+                )}
+                {dimensionOrder === 'CZT' && (
+                  <p>This pattern completes all channels for one Z-plane, then moves to the next Z-plane, and finally advances to the next timepoint. This minimizes channel switching at each depth.</p>
+                )}
+                {dimensionOrder === 'CTZ' && (
+                  <p>This pattern completes all channels for one timepoint, then moves to the next timepoint, and finally changes Z-planes. This optimizes for multichannel acquisition at each timepoint.</p>
+                )}
+              </div>
+              
+              {/* Slider for controlling visible frames */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium mb-1">
+                  Frame Range (showing {startFrame+1}-{Math.min(startFrame+visibleFrames, sequence.length)} of {sequence.length}):
+                </label>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max={maxStartFrame} 
+                  value={startFrame} 
+                  onChange={handleSliderChange}
+                  className="w-full"
+                />
+              </div>
+              
+              <div className="mb-8">
+                <div className="flex mb-4">
+                  {/* Depth label - positioned higher */}
+                  <div className="w-24 flex items-center justify-center relative">
+                    <span 
+                      className="font-bold text-lg text-gray-800 absolute" 
+                      style={{
+                        transform: 'rotate(-90deg)',
+                        whiteSpace: 'nowrap',
+                        left: -25,
+                        top: '30%' // Moved higher (was 50%)
+                      }}
+                    >
+                      Depth
+                    </span>
+                  </div>
+                  <div className="flex-1">
+                    <div className="text-center mb-2">
+                      <span className="font-bold text-lg text-gray-600">Acquisition Order</span>
+                    </div>
+                    <div className="overflow-auto">
+                      <div className="pt-12 pl-20 relative" style={{minHeight: `${(zSize + 1) * (frameSize + 30) + 60}px`, width: `${visibleFrames * xSpacing + 100}px`}}>
+                        {/* Z-axis labels - with background for better visibility */}
+                        {Array.from({length: zSize}).map((_, z) => (
+                          <div 
+                            key={z} 
+                            className="absolute font-semibold text-right pr-4 text-lg"
+                            style={{
+                              left: -20,
+                              top: `${(zSize - 1 - z) * (frameSize + 30) + frameSize/2}px`,
+                              transform: 'translateY(-50%)',
+                              backgroundColor: 'rgba(255,255,255,0.8)',
+                              padding: '2px 8px',
+                              borderRadius: '4px',
+                              zIndex: 5
+                            }}
+                          >
+                            Z{z}
+                          </div>
+                        ))}
+                        
+                        {/* Draw frames in acquisition order */}
+                        {visibleSequence.map((frame, i) => (
+                          <div 
+                            key={startFrame + i}
+                            className="absolute flex items-center justify-center rounded shadow"
+                            style={{
+                              backgroundColor: channelColors[frame.c],
+                              width: frameSize,
+                              height: frameSize,
+                              color: frame.c === 0 ? 'black' : 'white',
+                              fontWeight: 'bold',
+                              fontSize: frameSize * 0.3,
+                              left: `${(i + 1) * xSpacing}px`,
+                              top: `${(zSize - 1 - frame.z) * (frameSize + 30)}px`,
+                            }}
+                          >
+                            <div>{startFrame + i + 1}</div>
+                            <div className="absolute bottom-1 right-1 text-xs opacity-70">
+                              T{frame.t}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Sequence list as a column */}
+                <div className="lg:col-span-4">
+                  <h3 className="text-lg font-bold mb-3">Acquisition Sequence</h3>
+                  <div className="border rounded p-2 bg-gray-50 max-h-96 overflow-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr>
+                          <th className="text-left pr-2">IFD #</th>
+                          <th className="text-left">Frame</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {sequence.map((frame, i) => (
+                          <tr 
+                            key={i} 
+                            className="border-b" 
+                            style={{
+                              backgroundColor: i % 2 === 0 ? 'white' : '#f9f9f9'
+                            }}
+                          >
+                            <td className="pr-2 font-bold">{i+1}</td>
+                            <td>
+                              <div 
+                                className="inline-block w-2 h-2 rounded-full mr-1" 
+                                style={{backgroundColor: channelColors[frame.c]}}
+                              ></div>
+                              Z{frame.z}-C{frame.c}-T{frame.t}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      };
+
+      // Render the React component to the DOM
+      const root = ReactDOM.createRoot(document.getElementById('root'));
+      root.render(<DimensionOrderVisualizer />);
+    </script>
+  </main>
+  <footer>
+    <p>&copy; 2025 Heberto Mayorquin</p>
+  </footer>
+</body>
+</html>
