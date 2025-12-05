@@ -13,7 +13,7 @@ import type {
 
 import { useResizeObserver } from "../hooks/useResizeObserver";
 import { VIEW_ZOOM_MAX, VIEW_ZOOM_MIN } from "../state/useAppStore";
-import type { ManifestEntry, ProbeInterfaceFile } from "../types/probe";
+import type { ContactShapeParams, ManifestEntry, ProbeInterfaceFile } from "../types/probe";
 
 interface ProbeCanvasProps {
   entry: ManifestEntry;
@@ -154,13 +154,50 @@ export function ProbeCanvas({
 
     const contactPositions = probe.contact_positions ?? [];
     const shankIds = probe.shank_ids ?? [];
+    const contactShapes = probe.contact_shapes ?? [];
+    const contactShapeParams = probe.contact_shape_params ?? [];
     const isMultiShank = new Set(shankIds).size > 1;
+
+    // Helper to draw a contact shape
+    const drawContactShape = (
+      x: number,
+      y: number,
+      shape: string,
+      params: ContactShapeParams,
+    ) => {
+      ctx.beginPath();
+      switch (shape) {
+        case "circle": {
+          const radius = (params.radius ?? 5) * scale;
+          ctx.arc(x, y, radius, 0, Math.PI * 2);
+          break;
+        }
+        case "square": {
+          const side = (params.width ?? 10) * scale;
+          ctx.rect(x - side / 2, y - side / 2, side, side);
+          break;
+        }
+        case "rect": {
+          const w = (params.width ?? 10) * scale;
+          const h = (params.height ?? 15) * scale;
+          ctx.rect(x - w / 2, y - h / 2, w, h);
+          break;
+        }
+        default: {
+          // Fallback to circle with default radius
+          const fallbackRadius = Math.max(2.5, Math.min(8, 6 * (scale / 100)));
+          ctx.arc(x, y, fallbackRadius, 0, Math.PI * 2);
+        }
+      }
+    };
 
     contactPositions.forEach((position, index) => {
       const [x, y] = projectPoint(position);
-      const radius = Math.max(2.5, Math.min(8, 6 * (scale / 100)));
-      ctx.beginPath();
-      ctx.arc(x, y, radius, 0, Math.PI * 2);
+      const shape = contactShapes[index] ?? "";
+      const params = contactShapeParams[index] ?? {};
+
+      drawContactShape(x, y, shape, params);
+
       ctx.fillStyle = isMultiShank
         ? shankIds[index] % 2 === 0
           ? "rgba(59, 130, 246, 0.85)"

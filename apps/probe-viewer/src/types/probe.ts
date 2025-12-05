@@ -22,11 +22,19 @@ export interface ManifestEntry {
   annotations: Record<string, unknown>;
 }
 
+export interface ContactShapeParams {
+  radius?: number;   // for circle
+  width?: number;    // for square and rect
+  height?: number;   // for rect
+}
+
 export interface ProbeInterfaceProbe {
   ndim: number;
   si_units: string;
   annotations?: Record<string, unknown>;
   contact_positions: number[][];
+  contact_shapes?: string[];  // "circle" | "square" | "rect"
+  contact_shape_params?: ContactShapeParams[];
   shank_ids?: number[];
   probe_planar_contour?: number[][];
 }
