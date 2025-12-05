@@ -60,3 +60,11 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
+
+# Probe viewer generated files (created at build time)
+apps/probe-viewer/public/data/
+apps/probe-viewer/public/probes-manifest.json
+apps/probe-viewer/node_modules/
+
+# Build cache
+.cache/
