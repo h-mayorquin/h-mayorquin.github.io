@@ -101,3 +101,63 @@ apps/probe-viewer/
 - Zustand for state management
 - React Router for navigation
 - HTML5 Canvas for probe visualization
+
+## Why Canvas Instead of SVG?
+
+This application uses the HTML5 Canvas 2D API rather than SVG for rendering probe geometries. Both technologies could work for many probes in this catalog, but Canvas was chosen with scalability in mind.
+
+### The Trade-off
+
+SVG and Canvas represent two fundamentally different rendering architectures:
+
+- **SVG (Retained Mode)**: Each element exists as a DOM node. The browser maintains a scene graph with positions, styles, event listeners, and relationships. This makes interaction easy but creates overhead that grows with element count.
+
+- **Canvas (Immediate Mode)**: Drawing commands paint pixels to a bitmap buffer and are then forgotten. No state is retained. This requires more developer effort but eliminates DOM overhead entirely.
+
+### The Neuropixels Challenge
+
+While many probes in this catalog have modest contact counts (32-128 electrodes), Neuropixels probes push into territory where SVG performance becomes problematic:
+
+| Probe Type | Electrodes | Recording Sites to Visualize |
+|------------|------------|------------------------------|
+| Cambridge Neurotech | 32-256 | SVG handles well |
+| Neuronexus | 16-128 | SVG handles well |
+| **Neuropixels 1.0** | **960** | Borderline for SVG |
+| **Neuropixels 2.0 (single shank)** | **1,280** | Problematic for SVG |
+| **Neuropixels 2.0 (4-shank)** | **5,120** | SVG would struggle significantly |
+
+A 4-shank Neuropixels 2.0 probe has 5,120 recording sites arranged across a ~1 x 10 mm plane. Rendering this many elements as SVG DOM nodes, especially with pan/zoom interactions triggering redraws, would cause noticeable lag on many devices.
+
+### SVG Performance Thresholds
+
+Based on benchmarks from Khan Academy, Felt, and the D3.js community:
+
+| Element Count | SVG Performance |
+|---------------|-----------------|
+| < 500 | Excellent |
+| 500-1000 | Good on desktop, may stutter on mobile |
+| 1000-2000 | Noticeable lag during animations |
+| 2000-5000 | Poor experience, especially on tablets |
+| 5000+ | Unacceptable without virtualization |
+
+Canvas maintains near-constant performance regardless of element count since it only manipulates pixels in a bitmap buffer.
+
+### Why Canvas Fits This Application
+
+1. **Scales to high-density probes**: Neuropixels 2.0 with 5,120 electrodes renders as smoothly as a 32-channel probe.
+
+2. **Predictable pan/zoom performance**: Every interaction redraws all contacts. Canvas makes this explicit rather than relying on browser SVG transform optimizations (which vary significantly across browsers and devices).
+
+3. **Mobile-friendly**: Tablets and phones are common in lab settings. Canvas avoids the SVG performance cliff on resource-constrained devices.
+
+4. **No per-element interaction needed**: This viewer displays probe geometry without requiring click/hover on individual contacts. SVG's main advantage (built-in DOM events per element) goes unused.
+
+### When SVG Would Be Better
+
+SVG would be preferable if the application needed:
+- Per-contact selection, tooltips, or click handlers
+- CSS-based hover effects and transitions
+- Accessibility through per-element ARIA labels
+- Integration with React's declarative component model
+
+For a probe catalog viewer focused on displaying geometry with pan/zoom, Canvas is the pragmatic choice that ensures consistent performance across the full range of probe densities.
