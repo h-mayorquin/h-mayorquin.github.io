@@ -259,7 +259,7 @@ def main() -> None:
         run(["npm", "run", "dev"], cwd=frontend_dir)
     else:
         # Build frontend
-        dist_dir = build_frontend(frontend_dir, "/apps/probe-viewer/")
+        dist_dir = build_frontend(frontend_dir, "/apps/probe-viewer/dist/")
 
         # Add 404.html for client-side routing
         shutil.copy(dist_dir / "index.html", dist_dir / "404.html")
