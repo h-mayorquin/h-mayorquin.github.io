@@ -102,7 +102,7 @@ apps/probe-viewer/
 | **TypeScript** | Type-safe JavaScript |
 | **Vite** | Build tool and dev server - fast HMR, optimized production builds |
 | **Zustand** | Lightweight state management (probe cache, UI state, selections) |
-| **React Router** | Client-side routing for shareable URLs like `/probes/imec/NP1000` |
+| **React Router** | Client-side routing for shareable URLs like `/#/probes/imec/NP1000` |
 | **HTML5 Canvas** | Rendering probe geometries (see below for why not SVG) |
 
 ### Deployment
@@ -112,21 +112,40 @@ The app is deployed to GitHub Pages via GitHub Actions. On every push to `main`:
 2. Vite builds the production bundle
 3. Everything is deployed to GitHub Pages
 
-### SPA Routing on GitHub Pages
+### Hash Routing vs Browser Routing
 
-This is a Single Page Application (SPA) using client-side routing. This creates a challenge on GitHub Pages:
+This app uses **hash-based routing** (`/#/probes/imec/NP1000`) instead of browser routing (`/probes/imec/NP1000`). Here's why:
 
-**The problem:** When you navigate to `/apps/probe-viewer/probes/imec/NP1000`:
-- Within the app: React Router intercepts the navigation, no page reload, works fine
-- Direct link or refresh: GitHub Pages looks for a file at that path, finds nothing, returns 404
+**The problem with browser routing on GitHub Pages:**
 
-**Why this happens:** GitHub Pages is a static file server. It serves files that exist. It doesn't know that all routes should serve `index.html` and let JavaScript handle routing.
+GitHub Pages is a static file server. When you request `/apps/probe-viewer/probes/imec/NP1000`:
+1. GitHub looks for a file at that exact path
+2. No such file exists (there's only `index.html`)
+3. GitHub returns 404
+4. React never loads, so React Router never gets a chance to handle the route
 
-**The workaround:** A custom `404.html` that redirects to the app while preserving the intended route. GitHub Pages serves `404.html` for missing paths, so we use it to bootstrap the SPA.
+This means direct links and page refresh would break.
 
-**Alternative approaches:**
-- Hash-based routing (`/#/probes/imec/NP1000`) - works everywhere but uglier URLs
-- Server with fallback rules (Vercel, Netlify) - not available on GitHub Pages
+**How hash routing solves this:**
+
+The `#` fragment is never sent to the server. When you request `/#/probes/imec/NP1000`:
+1. Browser requests `/` from GitHub
+2. GitHub returns `index.html`
+3. React loads, reads the hash (`#/probes/imec/NP1000`)
+4. React Router renders the correct page
+
+Direct links and refresh work perfectly.
+
+**Trade-offs:**
+
+| Aspect | Browser Routing | Hash Routing |
+|--------|-----------------|--------------|
+| URLs | `/probes/imec/NP1000` | `/#/probes/imec/NP1000` |
+| GitHub Pages | Needs workarounds | Works natively |
+| SEO | Better | Worse (fragments ignored) |
+| Server-side rendering | Compatible | Not compatible |
+
+For a client-side visualization tool like this, hash routing is the pragmatic choice - the downsides (SEO, SSR) don't apply.
 
 ## Why Canvas Instead of SVG?
 
