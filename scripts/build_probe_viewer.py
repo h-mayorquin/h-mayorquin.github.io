@@ -259,10 +259,9 @@ def main() -> None:
         run(["npm", "run", "dev"], cwd=frontend_dir)
     else:
         # Build frontend
+        # Note: 404.html is in public/ and Vite copies it to dist/ automatically
+        # It contains the SPA redirect logic for GitHub Pages
         dist_dir = build_frontend(frontend_dir, "/apps/probe-viewer/")
-
-        # Add 404.html for client-side routing
-        shutil.copy(dist_dir / "index.html", dist_dir / "404.html")
 
         print(f"Done! Build output at: {dist_dir}")
 

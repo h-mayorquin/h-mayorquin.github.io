@@ -96,11 +96,37 @@ apps/probe-viewer/
 
 ## Technology Stack
 
-- React 19 + TypeScript
-- Vite for bundling
-- Zustand for state management
-- React Router for navigation
-- HTML5 Canvas for probe visualization
+| Technology | Purpose |
+|------------|---------|
+| **React 19** | UI component framework |
+| **TypeScript** | Type-safe JavaScript |
+| **Vite** | Build tool and dev server - fast HMR, optimized production builds |
+| **Zustand** | Lightweight state management (probe cache, UI state, selections) |
+| **React Router** | Client-side routing for shareable URLs like `/probes/imec/NP1000` |
+| **HTML5 Canvas** | Rendering probe geometries (see below for why not SVG) |
+
+### Deployment
+
+The app is deployed to GitHub Pages via GitHub Actions. On every push to `main`:
+1. The workflow runs `build_probe_viewer.py` to generate the probe manifest
+2. Vite builds the production bundle
+3. Everything is deployed to GitHub Pages
+
+### SPA Routing on GitHub Pages
+
+This is a Single Page Application (SPA) using client-side routing. This creates a challenge on GitHub Pages:
+
+**The problem:** When you navigate to `/apps/probe-viewer/probes/imec/NP1000`:
+- Within the app: React Router intercepts the navigation, no page reload, works fine
+- Direct link or refresh: GitHub Pages looks for a file at that path, finds nothing, returns 404
+
+**Why this happens:** GitHub Pages is a static file server. It serves files that exist. It doesn't know that all routes should serve `index.html` and let JavaScript handle routing.
+
+**The workaround:** A custom `404.html` that redirects to the app while preserving the intended route. GitHub Pages serves `404.html` for missing paths, so we use it to bootstrap the SPA.
+
+**Alternative approaches:**
+- Hash-based routing (`/#/probes/imec/NP1000`) - works everywhere but uglier URLs
+- Server with fallback rules (Vercel, Netlify) - not available on GitHub Pages
 
 ## Why Canvas Instead of SVG?
 
