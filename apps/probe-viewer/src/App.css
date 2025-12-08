@@ -233,6 +233,20 @@
   cursor: grabbing;
 }
 
+.probe-overview {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+
+.probe-overview:hover {
+  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.25);
+}
+
 .viewer-download {
   font-size: 0.9rem;
   padding: 0.5rem 0.75rem;

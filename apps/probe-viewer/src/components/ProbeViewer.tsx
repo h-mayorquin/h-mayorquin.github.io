@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef } from "react";
 
+import { useResizeObserver } from "../hooks/useResizeObserver";
 import { useAppStore, VIEW_ZOOM_MAX, VIEW_ZOOM_MIN } from "../state/useAppStore";
 import { JsonTree } from "./JsonTree";
 import { ProbeCanvas } from "./ProbeCanvas";
+import { ProbeOverview } from "./ProbeOverview";
 
 export function ProbeViewer() {
   const manifest = useAppStore((state) => state.manifest);
@@ -38,6 +40,9 @@ export function ProbeViewer() {
 
   const probeData = selectedProbeId ? probeCache[selectedProbeId] : undefined;
 
+  // Track canvas container size for minimap
+  const { ref: canvasContainerRef, size: canvasSize } = useResizeObserver<HTMLDivElement>();
+
   const lastResetProbeId = useRef<string | undefined>(undefined);
 
   useEffect(() => {
@@ -50,12 +55,15 @@ export function ProbeViewer() {
     }
   }, [selectedProbeId, resetView]);
 
-  // Smart initial zoom for very tall probes (like Neuropixels)
+  // Smart initial zoom and pan for very tall probes (like Neuropixels)
   // When probe geometry has extreme aspect ratio, zoom in so probe is ~1/3 of viewport width
+  // and pan to show the bottom (base) of the probe
   const lastSmartZoomProbeId = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (!probeData || !selectedProbeId) return;
     if (lastSmartZoomProbeId.current === selectedProbeId) return;
+    // Wait for canvas size to be available
+    if (canvasSize.width === 0 || canvasSize.height === 0) return;
 
     const probe = probeData.probes?.[0];
     if (!probe) return;
@@ -85,17 +93,34 @@ export function ProbeViewer() {
 
     if (aspectRatio > TALL_THRESHOLD) {
       // For very tall probes, start zoomed in
-      // At zoom=1, the probe fits entirely (height-constrained)
-      // We want the probe width to be ~1/3 of viewport width
-      // initialZoom = (viewport_width * TARGET_WIDTH_FRACTION / probe_width) / (viewport_height / probe_height)
-      // Simplified: initialZoom = aspectRatio * TARGET_WIDTH_FRACTION * (viewport_width / viewport_height)
-      // Since we don't know viewport here, approximate with aspect ratio alone
       const initialZoom = aspectRatio * TARGET_WIDTH_FRACTION;
       setZoom(initialZoom);
+
+      // Calculate pan to show the bottom of the probe
+      // Canvas projection: screenY = -(probeY - centerY) * scale + height/2 + panY
+      // minY (probe base) maps to screen bottom, maxY (probe tip) maps to screen top
+      // To show the base, we need to shift the view down (negative panY)
+      const mainPadding = 40;
+      const mainAvailW = Math.max(10, canvasSize.width - mainPadding * 2);
+      const mainAvailH = Math.max(10, canvasSize.height - mainPadding * 2);
+      const mainBaseScale = Math.min(mainAvailW / width, mainAvailH / height);
+      const mainScale = mainBaseScale * initialZoom;
+
+      // At panY=0, probe center is at screen center
+      // screenY of minY = -(minY - centerY) * scale + height/2 = (centerY - minY) * scale + height/2
+      // We want minY to appear near bottom of viewport (with margin)
+      // Target screenY for minY = height - margin
+      // So: (centerY - minY) * scale + height/2 + panY = height - margin
+      // panY = height - margin - height/2 - (centerY - minY) * scale
+      // panY = height/2 - margin - (height/2) * scale  (since centerY - minY = height/2)
+      const probeHalfHeightScreen = (height / 2) * mainScale;
+      const initialPanY = canvasSize.height / 2 - mainPadding - probeHalfHeightScreen;
+
+      setPan(0, initialPanY);
     }
 
     lastSmartZoomProbeId.current = selectedProbeId;
-  }, [probeData, selectedProbeId, setZoom]);
+  }, [probeData, selectedProbeId, setZoom, setPan, canvasSize.width, canvasSize.height]);
 
   if (manifestStatus === "loading") {
     return (
@@ -156,7 +181,7 @@ export function ProbeViewer() {
             Zoom out
           </button>
           <button type="button" onClick={() => resetView()}>
-            Reset view
+            Show full probe
           </button>
         </div>
         <div className="viewer-controls-group">
@@ -171,23 +196,34 @@ export function ProbeViewer() {
         </div>
       </section>
 
-      <section className="viewer-canvas">
+      <section className="viewer-canvas" ref={canvasContainerRef}>
         {status === "error" && (
           <div className="viewer-placeholder viewer-placeholder--error">
             <p>{statusMessage ?? "Failed to load probe data."}</p>
           </div>
         )}
         {status !== "error" && probeData && (
-          <ProbeCanvas
-            entry={entry}
-            probeData={probeData}
-            zoom={view.zoom}
-            panX={view.panX}
-            panY={view.panY}
-            showContactIds={view.showContactIds}
-            onPan={(nextX, nextY) => setPan(nextX, nextY)}
-            onZoom={(value) => setZoom(value)}
-          />
+          <>
+            <ProbeCanvas
+              entry={entry}
+              probeData={probeData}
+              zoom={view.zoom}
+              panX={view.panX}
+              panY={view.panY}
+              showContactIds={view.showContactIds}
+              onPan={(nextX, nextY) => setPan(nextX, nextY)}
+              onZoom={(value) => setZoom(value)}
+            />
+            <ProbeOverview
+              probeData={probeData}
+              zoom={view.zoom}
+              panX={view.panX}
+              panY={view.panY}
+              mainWidth={canvasSize.width}
+              mainHeight={canvasSize.height}
+              onPan={(nextX, nextY) => setPan(nextX, nextY)}
+            />
+          </>
         )}
         {status === "loading" && (
           <div className="viewer-placeholder">
