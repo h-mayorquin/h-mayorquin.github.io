@@ -219,6 +219,68 @@ export function ProbeCanvas({
         ctx.fillText(String(index), x, y + 4);
       });
     }
+
+    // === L-Shaped Scale Bar ===
+    // Renders a scale bar in the bottom-left corner showing reference lengths
+    // for both X and Y dimensions. The length adapts to zoom level using "nice" numbers.
+    const renderScaleBar = () => {
+      // Calculate adaptive scale bar length using "nice" numbers
+      const niceNumbers = [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000];
+      const targetPixels = 80; // Target bar length in pixels
+      const targetUm = targetPixels / scale;
+      const scaleBarUm = niceNumbers.reduce((prev, curr) =>
+        Math.abs(curr - targetUm) < Math.abs(prev - targetUm) ? curr : prev
+      );
+      const scaleBarPixels = scaleBarUm * scale;
+
+      // Position: bottom-left corner
+      const margin = 20;
+      const cornerX = margin;
+      const cornerY = heightPx - margin;
+      const tickSize = 4;
+
+      // Style for L shape
+      ctx.strokeStyle = "rgba(15, 23, 42, 0.9)";
+      ctx.lineWidth = 2;
+      ctx.lineCap = "square";
+
+      // Draw L shape
+      ctx.beginPath();
+      // Vertical arm (Y) - goes up from corner
+      ctx.moveTo(cornerX, cornerY);
+      ctx.lineTo(cornerX, cornerY - scaleBarPixels);
+      // Horizontal arm (X) - goes right from corner
+      ctx.moveTo(cornerX, cornerY);
+      ctx.lineTo(cornerX + scaleBarPixels, cornerY);
+      ctx.stroke();
+
+      // End ticks
+      ctx.beginPath();
+      // Top of vertical arm
+      ctx.moveTo(cornerX - tickSize, cornerY - scaleBarPixels);
+      ctx.lineTo(cornerX + tickSize, cornerY - scaleBarPixels);
+      // Right of horizontal arm
+      ctx.moveTo(cornerX + scaleBarPixels, cornerY - tickSize);
+      ctx.lineTo(cornerX + scaleBarPixels, cornerY + tickSize);
+      ctx.stroke();
+
+      // Labels
+      const label = scaleBarUm >= 1000 ? `${scaleBarUm / 1000} mm` : `${scaleBarUm} μm`;
+      ctx.font = '11px "Inter", sans-serif';
+      ctx.fillStyle = "rgba(15, 23, 42, 0.9)";
+
+      // X label (below horizontal arm)
+      ctx.textAlign = "center";
+      ctx.textBaseline = "top";
+      ctx.fillText(label, cornerX + scaleBarPixels / 2, cornerY + 5);
+
+      // Y label (beside vertical arm)
+      ctx.textAlign = "left";
+      ctx.textBaseline = "middle";
+      ctx.fillText(label, cornerX + 6, cornerY - scaleBarPixels / 2);
+    };
+
+    renderScaleBar();
   }, [entry.id, geometry, panX, panY, probe, probeData, showContactIds, size.height, size.width, zoom]);
 
   const clampZoom = useCallback(
