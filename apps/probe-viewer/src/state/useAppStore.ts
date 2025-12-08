@@ -41,7 +41,7 @@ interface AppState {
 }
 
 export const VIEW_ZOOM_MIN = 0.2;
-export const VIEW_ZOOM_MAX = 20;
+export const VIEW_ZOOM_MAX = 50;  // High max for long probes like Neuropixels
 
 const INITIAL_VIEW_STATE: ViewState = {
   zoom: 1,
