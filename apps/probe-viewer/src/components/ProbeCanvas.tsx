@@ -145,18 +145,16 @@ export function ProbeCanvas({
         }
       });
       ctx.closePath();
-      ctx.fillStyle = "rgba(14, 116, 144, 0.15)";
-      ctx.strokeStyle = "rgba(13, 148, 136, 0.8)";
+      ctx.fillStyle = "rgba(180, 185, 195, 0.7)";  // Metallic silver
+      ctx.strokeStyle = "rgba(100, 105, 115, 0.95)";
       ctx.lineWidth = Math.max(1.2, 2.5 * (scale / 100));
       ctx.fill();
       ctx.stroke();
     }
 
     const contactPositions = probe.contact_positions ?? [];
-    const shankIds = probe.shank_ids ?? [];
     const contactShapes = probe.contact_shapes ?? [];
     const contactShapeParams = probe.contact_shape_params ?? [];
-    const isMultiShank = new Set(shankIds).size > 1;
 
     // Helper to draw a contact shape
     const drawContactShape = (
@@ -191,6 +189,21 @@ export function ProbeCanvas({
       }
     };
 
+    // Shadow offset for depth effect
+    const shadowOffset = Math.max(3, 4 * (scale / 100));
+
+    // First pass: draw shadows (offset dark shapes)
+    contactPositions.forEach((position, index) => {
+      const [x, y] = projectPoint(position);
+      const shape = contactShapes[index] ?? "";
+      const params = contactShapeParams[index] ?? {};
+
+      drawContactShape(x + shadowOffset, y + shadowOffset, shape, params);
+      ctx.fillStyle = "rgba(30, 20, 5, 0.7)";  // Even darker and more opaque
+      ctx.fill();
+    });
+
+    // Second pass: draw gold contacts on top
     contactPositions.forEach((position, index) => {
       const [x, y] = projectPoint(position);
       const shape = contactShapes[index] ?? "";
@@ -198,13 +211,9 @@ export function ProbeCanvas({
 
       drawContactShape(x, y, shape, params);
 
-      ctx.fillStyle = isMultiShank
-        ? shankIds[index] % 2 === 0
-          ? "rgba(59, 130, 246, 0.85)"
-          : "rgba(37, 99, 235, 0.85)"
-        : "rgba(37, 99, 235, 0.9)";
-      ctx.strokeStyle = "rgba(15, 23, 42, 0.7)";
-      ctx.lineWidth = Math.max(0.8, 1.6 * (scale / 150));
+      ctx.fillStyle = "rgba(212, 175, 55, 0.9)";  // Gold contacts
+      ctx.strokeStyle = "rgba(80, 60, 15, 0.9)";  // Dark bronze outline
+      ctx.lineWidth = Math.max(1.2, 2.5 * (scale / 150));
       ctx.fill();
       ctx.stroke();
     });

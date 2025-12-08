@@ -212,7 +212,7 @@
   border-radius: 1.1rem;
   border: 1px solid rgba(148, 163, 184, 0.4);
   overflow: hidden;
-  background: radial-gradient(circle at top left, #eff6ff 0%, #e2e8f0 45%, #cbd5f5 100%);
+  background: #f8f9fa;
 }
 
 .viewer-canvas-surface {
