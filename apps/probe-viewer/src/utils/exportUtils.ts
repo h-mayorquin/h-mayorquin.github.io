@@ -208,8 +208,8 @@ function renderProbeToContext(
     }
   };
 
-  // Shadow offset for depth effect
-  const shadowOffset = Math.max(3, 4 * (scale / 100));
+  // Shadow offset for depth effect - subtle, proportional to scale
+  const shadowOffset = 0.4 * scale;  // 0.4 micrometer offset for subtle depth
 
   // First pass: draw shadows
   contactPositions.forEach((position, index) => {
@@ -230,7 +230,7 @@ function renderProbeToContext(
 
     drawContactShape(x, y, shape, params);
 
-    ctx.fillStyle = "rgba(212, 175, 55, 0.9)";
+    ctx.fillStyle = "rgba(212, 175, 55, 1.0)";  // Fully opaque to cover shadow
     ctx.strokeStyle = "rgba(80, 60, 15, 0.9)";
     ctx.lineWidth = Math.max(1.2, 2.5 * (scale / 150));
     ctx.fill();
@@ -292,7 +292,7 @@ function generateProbeSvgString(
   const contactPositions = probe.contact_positions ?? [];
   const contactShapes = probe.contact_shapes ?? [];
   const contactShapeParams = probe.contact_shape_params ?? [];
-  const shadowOffset = Math.max(3, 4 * (scale / 100));
+  const shadowOffset = 0.4 * scale;  // 0.4 micrometer offset for subtle depth
   const contactStrokeWidth = Math.max(1.2, 2.5 * (scale / 150));
 
   // Helper to generate contact SVG element
@@ -303,7 +303,7 @@ function generateProbeSvgString(
     params: ContactShapeParams,
     isShadow: boolean
   ): string => {
-    const fill = isShadow ? "rgba(30, 20, 5, 0.7)" : "rgba(212, 175, 55, 0.9)";
+    const fill = isShadow ? "rgba(30, 20, 5, 0.7)" : "rgba(212, 175, 55, 1.0)";
     const stroke = isShadow ? "none" : "rgba(80, 60, 15, 0.9)";
     const sw = isShadow ? 0 : contactStrokeWidth;
 

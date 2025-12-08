@@ -207,8 +207,8 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
       }
     };
 
-    // Shadow offset for depth effect
-    const shadowOffset = Math.max(3, 4 * (scale / 100));
+    // Shadow offset for depth effect - subtle, proportional to scale
+    const shadowOffset = 0.4 * scale;  // 0.4 micrometer offset for subtle depth
 
     // First pass: draw shadows (offset dark shapes)
     contactPositions.forEach((position, index) => {
@@ -229,7 +229,7 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
 
       drawContactShape(x, y, shape, params);
 
-      ctx.fillStyle = "rgba(212, 175, 55, 0.9)";  // Gold contacts
+      ctx.fillStyle = "rgba(212, 175, 55, 1.0)";  // Gold contacts - fully opaque to cover shadow
       ctx.strokeStyle = "rgba(80, 60, 15, 0.9)";  // Dark bronze outline
       ctx.lineWidth = Math.max(1.2, 2.5 * (scale / 150));
       ctx.fill();
