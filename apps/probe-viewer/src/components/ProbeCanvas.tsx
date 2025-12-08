@@ -184,9 +184,16 @@ export function ProbeCanvas({
           break;
         }
         default: {
-          // Fallback to circle with default radius
-          const fallbackRadius = Math.max(2.5, Math.min(8, 6 * (scale / 100)));
-          ctx.arc(x, y, fallbackRadius, 0, Math.PI * 2);
+          // Unknown/missing shape: draw a dot with X to indicate missing data
+          const markerSize = Math.max(3, Math.min(10, 7 * (scale / 100)));
+          // Draw small circle
+          ctx.arc(x, y, markerSize * 0.4, 0, Math.PI * 2);
+          ctx.closePath();
+          // Draw X through the center
+          ctx.moveTo(x - markerSize, y - markerSize);
+          ctx.lineTo(x + markerSize, y + markerSize);
+          ctx.moveTo(x + markerSize, y - markerSize);
+          ctx.lineTo(x - markerSize, y + markerSize);
         }
       }
     };
