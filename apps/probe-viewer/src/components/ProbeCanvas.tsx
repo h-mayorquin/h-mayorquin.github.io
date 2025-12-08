@@ -301,10 +301,14 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
       ctx.textBaseline = "top";
       ctx.fillText(label, cornerX + scaleBarPixels / 2, cornerY + 5);
 
-      // Y label (beside vertical arm)
-      ctx.textAlign = "left";
-      ctx.textBaseline = "middle";
-      ctx.fillText(label, cornerX + 6, cornerY - scaleBarPixels / 2);
+      // Y label (rotated, to the left of vertical arm)
+      ctx.save();
+      ctx.translate(cornerX - 6, cornerY - scaleBarPixels / 2);
+      ctx.rotate(-Math.PI / 2);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "bottom";
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
     };
 
     if (showScaleBar) {
