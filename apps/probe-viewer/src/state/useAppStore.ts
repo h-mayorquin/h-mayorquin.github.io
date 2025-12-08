@@ -16,6 +16,8 @@ interface ViewState {
   panX: number;
   panY: number;
   showContactIds: boolean;
+  showScaleBar: boolean;
+  showOverview: boolean;
 }
 
 interface AppState {
@@ -38,16 +40,20 @@ interface AppState {
   setPan: (panX: number, panY: number) => void;
   resetView: () => void;
   toggleContactIds: (value?: boolean) => void;
+  toggleScaleBar: (value?: boolean) => void;
+  toggleOverview: (value?: boolean) => void;
 }
 
 export const VIEW_ZOOM_MIN = 0.1;
-export const VIEW_ZOOM_MAX = 50;  // High max for long probes like Neuropixels
+export const VIEW_ZOOM_MAX = 100;  // High max for long probes like Neuropixels
 
 const INITIAL_VIEW_STATE: ViewState = {
   zoom: 1,
   panX: 0,
   panY: 0,
   showContactIds: false,
+  showScaleBar: true,
+  showOverview: true,
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -192,6 +198,24 @@ export const useAppStore = create<AppState>((set, get) => ({
         ...state.view,
         showContactIds:
           value !== undefined ? value : !state.view.showContactIds,
+      },
+    })),
+
+  toggleScaleBar: (value) =>
+    set((state) => ({
+      view: {
+        ...state.view,
+        showScaleBar:
+          value !== undefined ? value : !state.view.showScaleBar,
+      },
+    })),
+
+  toggleOverview: (value) =>
+    set((state) => ({
+      view: {
+        ...state.view,
+        showOverview:
+          value !== undefined ? value : !state.view.showOverview,
       },
     })),
 }));

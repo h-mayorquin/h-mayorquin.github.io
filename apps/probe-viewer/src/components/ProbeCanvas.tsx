@@ -1,6 +1,8 @@
 import {
+  forwardRef,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -22,6 +24,7 @@ interface ProbeCanvasProps {
   panX: number;
   panY: number;
   showContactIds: boolean;
+  showScaleBar: boolean;
   onPan: (x: number, y: number) => void;
   onZoom: (zoom: number) => void;
 }
@@ -72,17 +75,25 @@ function computeGeometrySummary(probeData: ProbeInterfaceFile): GeometrySummary 
   return { minX, maxX, minY, maxY, width, height, centerX, centerY };
 }
 
-export function ProbeCanvas({
-  entry,
-  probeData,
-  zoom,
-  panX,
-  panY,
-  showContactIds,
-  onPan,
-  onZoom,
-}: ProbeCanvasProps) {
+export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
+  function ProbeCanvas(
+    {
+      entry,
+      probeData,
+      zoom,
+      panX,
+      panY,
+      showContactIds,
+      showScaleBar,
+      onPan,
+      onZoom,
+    },
+    ref
+  ) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+
+  // Expose canvas to parent for export
+  useImperativeHandle(ref, () => canvasRef.current!, []);
   const { ref: containerRef, size } = useResizeObserver<HTMLDivElement>();
   const [isDragging, setIsDragging] = useState(false);
   const dragOriginRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
@@ -296,8 +307,10 @@ export function ProbeCanvas({
       ctx.fillText(label, cornerX + 6, cornerY - scaleBarPixels / 2);
     };
 
-    renderScaleBar();
-  }, [entry.id, geometry, panX, panY, probe, probeData, showContactIds, size.height, size.width, zoom]);
+    if (showScaleBar) {
+      renderScaleBar();
+    }
+  }, [entry.id, geometry, panX, panY, probe, probeData, showContactIds, showScaleBar, size.height, size.width, zoom]);
 
   const clampZoom = useCallback(
     (value: number) => Math.min(VIEW_ZOOM_MAX, Math.max(VIEW_ZOOM_MIN, value)),
@@ -376,4 +389,4 @@ export function ProbeCanvas({
       )}
     </div>
   );
-}
+});

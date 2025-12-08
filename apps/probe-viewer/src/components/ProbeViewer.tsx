@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { useResizeObserver } from "../hooks/useResizeObserver";
 import { useAppStore, VIEW_ZOOM_MAX, VIEW_ZOOM_MIN } from "../state/useAppStore";
+import { exportProbeAsPng, exportProbeAsSvg } from "../utils/exportUtils";
 import { JsonTree } from "./JsonTree";
 import { ProbeCanvas } from "./ProbeCanvas";
 import { ProbeOverview } from "./ProbeOverview";
@@ -19,6 +20,8 @@ export function ProbeViewer() {
   const setPan = useAppStore((state) => state.setPan);
   const resetView = useAppStore((state) => state.resetView);
   const toggleContactIds = useAppStore((state) => state.toggleContactIds);
+  const toggleScaleBar = useAppStore((state) => state.toggleScaleBar);
+  const toggleOverview = useAppStore((state) => state.toggleOverview);
 
   useEffect(() => {
     if (selectedProbeId) {
@@ -42,6 +45,29 @@ export function ProbeViewer() {
 
   // Track canvas container size for minimap
   const { ref: canvasContainerRef, size: canvasSize } = useResizeObserver<HTMLDivElement>();
+
+  // Export handlers
+  const handleExportPng = useCallback(() => {
+    if (probeData && entry) {
+      exportProbeAsPng(
+        probeData,
+        { zoom: view.zoom, panX: view.panX, panY: view.panY },
+        { width: canvasSize.width, height: canvasSize.height },
+        `${entry.id}.png`
+      );
+    }
+  }, [probeData, entry, view.zoom, view.panX, view.panY, canvasSize.width, canvasSize.height]);
+
+  const handleExportSvg = useCallback(() => {
+    if (probeData && entry) {
+      exportProbeAsSvg(
+        probeData,
+        { zoom: view.zoom, panX: view.panX, panY: view.panY },
+        { width: canvasSize.width, height: canvasSize.height },
+        `${entry.id}.svg`
+      );
+    }
+  }, [probeData, entry, view.zoom, view.panX, view.panY, canvasSize.width, canvasSize.height]);
 
   const lastResetProbeId = useRef<string | undefined>(undefined);
 
@@ -156,14 +182,22 @@ export function ProbeViewer() {
             {entry.shankCount} shanks
           </p>
         </div>
-        <a
-          className="viewer-download"
-          href={entry.jsonUrl}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Download JSON
-        </a>
+        <div className="viewer-header-actions">
+          <button type="button" className="viewer-download" onClick={handleExportPng}>
+            Export PNG
+          </button>
+          <button type="button" className="viewer-download" onClick={handleExportSvg}>
+            Export SVG
+          </button>
+          <a
+            className="viewer-download"
+            href={entry.jsonUrl}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Download JSON
+          </a>
+        </div>
       </header>
 
       <section className="viewer-controls">
@@ -193,6 +227,22 @@ export function ProbeViewer() {
             />
             Show contact IDs
           </label>
+          <label className="viewer-toggle">
+            <input
+              type="checkbox"
+              checked={view.showScaleBar}
+              onChange={(event) => toggleScaleBar(event.target.checked)}
+            />
+            Scale bar
+          </label>
+          <label className="viewer-toggle">
+            <input
+              type="checkbox"
+              checked={view.showOverview}
+              onChange={(event) => toggleOverview(event.target.checked)}
+            />
+            Overview
+          </label>
         </div>
       </section>
 
@@ -211,18 +261,21 @@ export function ProbeViewer() {
               panX={view.panX}
               panY={view.panY}
               showContactIds={view.showContactIds}
+              showScaleBar={view.showScaleBar}
               onPan={(nextX, nextY) => setPan(nextX, nextY)}
               onZoom={(value) => setZoom(value)}
             />
-            <ProbeOverview
-              probeData={probeData}
-              zoom={view.zoom}
-              panX={view.panX}
-              panY={view.panY}
-              mainWidth={canvasSize.width}
-              mainHeight={canvasSize.height}
-              onPan={(nextX, nextY) => setPan(nextX, nextY)}
-            />
+            {view.showOverview && (
+              <ProbeOverview
+                probeData={probeData}
+                zoom={view.zoom}
+                panX={view.panX}
+                panY={view.panY}
+                mainWidth={canvasSize.width}
+                mainHeight={canvasSize.height}
+                onPan={(nextX, nextY) => setPan(nextX, nextY)}
+              />
+            )}
           </>
         )}
         {status === "loading" && (
