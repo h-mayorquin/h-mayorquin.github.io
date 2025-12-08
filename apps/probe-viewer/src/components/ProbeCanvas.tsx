@@ -115,12 +115,10 @@ export function ProbeCanvas({
     const padding = 40;
     const availableWidth = Math.max(10, widthPx - padding * 2);
     const availableHeight = Math.max(10, heightPx - padding * 2);
-    // For tall probes (height > width), fit width so contacts are visible
-    // For wide/square probes, fit all to show the complete probe
-    const aspectRatio = geometry.height / geometry.width;
-    const baseScale = aspectRatio > 1
-      ? availableWidth / geometry.width
-      : Math.min(availableWidth / geometry.width, availableHeight / geometry.height);
+    const baseScale = Math.min(
+      availableWidth / geometry.width,
+      availableHeight / geometry.height,
+    );
     const scale = baseScale * zoom;
 
     const offsetX = widthPx / 2 + panX;

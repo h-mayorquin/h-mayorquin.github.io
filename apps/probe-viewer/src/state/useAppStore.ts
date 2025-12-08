@@ -40,7 +40,7 @@ interface AppState {
   toggleContactIds: (value?: boolean) => void;
 }
 
-export const VIEW_ZOOM_MIN = 0.2;
+export const VIEW_ZOOM_MIN = 0.1;
 export const VIEW_ZOOM_MAX = 50;  // High max for long probes like Neuropixels
 
 const INITIAL_VIEW_STATE: ViewState = {

@@ -50,6 +50,53 @@ export function ProbeViewer() {
     }
   }, [selectedProbeId, resetView]);
 
+  // Smart initial zoom for very tall probes (like Neuropixels)
+  // When probe geometry has extreme aspect ratio, zoom in so probe is ~1/3 of viewport width
+  const lastSmartZoomProbeId = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (!probeData || !selectedProbeId) return;
+    if (lastSmartZoomProbeId.current === selectedProbeId) return;
+
+    const probe = probeData.probes?.[0];
+    if (!probe) return;
+
+    const positions = probe.contact_positions ?? [];
+    const contour = probe.probe_planar_contour ?? [];
+    if (positions.length === 0) return;
+
+    // Calculate geometry bounds
+    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+    const updateBounds = (point: number[]) => {
+      const [x, y] = point;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    };
+    positions.forEach(updateBounds);
+    contour.forEach(updateBounds);
+
+    const width = Math.max(10, maxX - minX);
+    const height = Math.max(10, maxY - minY);
+    const aspectRatio = height / width;
+
+    const TALL_THRESHOLD = 10;
+    const TARGET_WIDTH_FRACTION = 1 / 3;
+
+    if (aspectRatio > TALL_THRESHOLD) {
+      // For very tall probes, start zoomed in
+      // At zoom=1, the probe fits entirely (height-constrained)
+      // We want the probe width to be ~1/3 of viewport width
+      // initialZoom = (viewport_width * TARGET_WIDTH_FRACTION / probe_width) / (viewport_height / probe_height)
+      // Simplified: initialZoom = aspectRatio * TARGET_WIDTH_FRACTION * (viewport_width / viewport_height)
+      // Since we don't know viewport here, approximate with aspect ratio alone
+      const initialZoom = aspectRatio * TARGET_WIDTH_FRACTION;
+      setZoom(initialZoom);
+    }
+
+    lastSmartZoomProbeId.current = selectedProbeId;
+  }, [probeData, selectedProbeId, setZoom]);
+
   if (manifestStatus === "loading") {
     return (
       <div className="viewer-placeholder">
