@@ -324,11 +324,39 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
   const handleWheel = useCallback(
     (event: ReactWheelEvent<HTMLCanvasElement>) => {
       event.preventDefault();
+
+      // Get mouse position relative to canvas
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      // Canvas center
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      // Mouse offset from center (in screen pixels)
+      const offsetFromCenterX = mouseX - centerX;
+      const offsetFromCenterY = mouseY - centerY;
+
+      // Calculate new zoom
       const zoomFactor = Math.exp(-event.deltaY * 0.002);
       const nextZoom = clampZoom(zoom * zoomFactor);
+      const actualZoomFactor = nextZoom / zoom;
+
+      // Adjust pan so the point under the mouse stays fixed
+      // The point under mouse in current view: (panX + offsetFromCenterX, panY + offsetFromCenterY)
+      // After zoom, we want the same world point under mouse, so:
+      // newPanX + offsetFromCenterX = (panX + offsetFromCenterX) * actualZoomFactor
+      // newPanX = panX * actualZoomFactor + offsetFromCenterX * (actualZoomFactor - 1)
+      const newPanX = panX * actualZoomFactor + offsetFromCenterX * (actualZoomFactor - 1);
+      const newPanY = panY * actualZoomFactor + offsetFromCenterY * (actualZoomFactor - 1);
+
+      onPan(newPanX, newPanY);
       onZoom(nextZoom);
     },
-    [clampZoom, onZoom, zoom],
+    [clampZoom, onPan, onZoom, panX, panY, zoom],
   );
 
   const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
@@ -365,11 +393,35 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
   const handleDoubleClick = useCallback(
     (event: ReactMouseEvent<HTMLCanvasElement>) => {
       event.preventDefault();
+
+      // Get click position relative to canvas
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+
+      // Canvas center
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      // Mouse offset from center
+      const offsetFromCenterX = mouseX - centerX;
+      const offsetFromCenterY = mouseY - centerY;
+
+      // Calculate new zoom
       const zoomFactor = event.shiftKey ? 1 / 1.5 : 1.5;
       const nextZoom = clampZoom(zoom * zoomFactor);
+      const actualZoomFactor = nextZoom / zoom;
+
+      // Adjust pan so the clicked point stays fixed
+      const newPanX = panX * actualZoomFactor + offsetFromCenterX * (actualZoomFactor - 1);
+      const newPanY = panY * actualZoomFactor + offsetFromCenterY * (actualZoomFactor - 1);
+
+      onPan(newPanX, newPanY);
       onZoom(nextZoom);
     },
-    [clampZoom, onZoom, zoom],
+    [clampZoom, onPan, onZoom, panX, panY, zoom],
   );
 
   return (
