@@ -86,14 +86,22 @@ export function ProbeOverview({
     ctx.fillStyle = "rgba(255, 255, 255, 0.95)";
     ctx.fillRect(0, 0, MINIMAP_WIDTH, MINIMAP_HEIGHT);
 
-    // Calculate scale to fit probe in minimap
+    // Draw title at top
+    const titleHeight = 16;
+    ctx.font = '9px "Inter", sans-serif';
+    ctx.fillStyle = "rgba(71, 85, 105, 0.9)";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "top";
+    ctx.fillText("Full probe view", MINIMAP_WIDTH / 2, 4);
+
+    // Calculate scale to fit probe in minimap (accounting for title)
     const padding = 8;
     const availW = MINIMAP_WIDTH - padding * 2;
-    const availH = MINIMAP_HEIGHT - padding * 2;
+    const availH = MINIMAP_HEIGHT - padding * 2 - titleHeight;
     const minimapScale = Math.min(availW / geometry.width, availH / geometry.height);
 
     const offsetX = MINIMAP_WIDTH / 2;
-    const offsetY = MINIMAP_HEIGHT / 2;
+    const offsetY = (MINIMAP_HEIGHT + titleHeight) / 2;  // Shift down to account for title
 
     const projectPoint = (point: number[]) => {
       const [x, y] = point;
