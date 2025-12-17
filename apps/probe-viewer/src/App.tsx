@@ -10,6 +10,8 @@ import { Sidebar } from "./components/Sidebar";
 import { useAppStore } from "./state/useAppStore";
 import "./App.css";
 
+const DEFAULT_PROBE_ID = "plexon:8S1024";
+
 function App() {
   const { manufacturer, model } = useParams();
   const location = useLocation();
@@ -43,8 +45,11 @@ function App() {
       ? manifestById.get(selectedProbeId)
       : undefined;
 
+    const getDefaultProbe = () =>
+      manifestById.get(DEFAULT_PROBE_ID) ?? manifest[0];
+
     if (selectedProbeId && !currentSelected) {
-      const fallback = routeEntry ?? manifest[0];
+      const fallback = routeEntry ?? getDefaultProbe();
       if (fallback && fallback.id !== selectedProbeId) {
         selectProbe(fallback.id);
       }
@@ -55,7 +60,7 @@ function App() {
       if (routeEntry) {
         selectProbe(routeEntry.id);
       } else {
-        const fallback = manifest[0];
+        const fallback = getDefaultProbe();
         if (fallback) {
           selectProbe(fallback.id);
         }
