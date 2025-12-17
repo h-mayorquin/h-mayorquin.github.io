@@ -70,10 +70,11 @@ export function ProbeViewer() {
         probeData,
         { zoom: view.zoom, panX: view.panX, panY: view.panY },
         { width: canvasSize.width, height: canvasSize.height },
-        `${entry.id}.png`
+        `${entry.id}.png`,
+        view.showScaleBar
       );
     }
-  }, [probeData, entry, view.zoom, view.panX, view.panY, canvasSize.width, canvasSize.height]);
+  }, [probeData, entry, view.zoom, view.panX, view.panY, canvasSize.width, canvasSize.height, view.showScaleBar]);
 
   const handleExportSvg = useCallback(() => {
     if (probeData && entry) {
@@ -81,10 +82,11 @@ export function ProbeViewer() {
         probeData,
         { zoom: view.zoom, panX: view.panX, panY: view.panY },
         { width: canvasSize.width, height: canvasSize.height },
-        `${entry.id}.svg`
+        `${entry.id}.svg`,
+        view.showScaleBar
       );
     }
-  }, [probeData, entry, view.zoom, view.panX, view.panY, canvasSize.width, canvasSize.height]);
+  }, [probeData, entry, view.zoom, view.panX, view.panY, canvasSize.width, canvasSize.height, view.showScaleBar]);
 
   const lastResetProbeId = useRef<string | undefined>(undefined);
 
@@ -200,10 +202,20 @@ export function ProbeViewer() {
           </p>
         </div>
         <div className="viewer-header-actions">
-          <button type="button" className="viewer-download" onClick={handleExportPng}>
+          <button
+            type="button"
+            className="viewer-download"
+            onClick={handleExportPng}
+            title="Export current view as PNG (white background). Toggle 'Scale bar' below to include it in the export."
+          >
             Export PNG
           </button>
-          <button type="button" className="viewer-download" onClick={handleExportSvg}>
+          <button
+            type="button"
+            className="viewer-download"
+            onClick={handleExportSvg}
+            title="Export current view as SVG (transparent background). Toggle 'Scale bar' below to include it in the export."
+          >
             Export SVG
           </button>
           <a
@@ -211,6 +223,7 @@ export function ProbeViewer() {
             href={entry.jsonUrl}
             target="_blank"
             rel="noreferrer"
+            title="Download the probeinterface JSON file with raw geometry data"
           >
             Download JSON
           </a>
