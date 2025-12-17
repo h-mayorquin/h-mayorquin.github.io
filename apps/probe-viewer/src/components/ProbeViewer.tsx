@@ -34,7 +34,7 @@ export function ProbeViewer() {
   const probeStatus = useAppStore((state) => state.probeStatus);
   const view = useAppStore((state) => state.view);
   const setZoom = useAppStore((state) => state.setZoom);
-  const setPan = useAppStore((state) => state.setPan);
+  const setViewCenter = useAppStore((state) => state.setViewCenter);
   const resetView = useAppStore((state) => state.resetView);
   const toggleContactIds = useAppStore((state) => state.toggleContactIds);
   const toggleScaleBar = useAppStore((state) => state.toggleScaleBar);
@@ -68,25 +68,25 @@ export function ProbeViewer() {
     if (probeData && entry) {
       exportProbeAsPng(
         probeData,
-        { zoom: view.zoom, panX: view.panX, panY: view.panY },
+        { zoom: view.zoom, viewCenterX: view.viewCenterX, viewCenterY: view.viewCenterY },
         { width: canvasSize.width, height: canvasSize.height },
         `${entry.id}.png`,
         view.showScaleBar
       );
     }
-  }, [probeData, entry, view.zoom, view.panX, view.panY, canvasSize.width, canvasSize.height, view.showScaleBar]);
+  }, [probeData, entry, view.zoom, view.viewCenterX, view.viewCenterY, canvasSize.width, canvasSize.height, view.showScaleBar]);
 
   const handleExportSvg = useCallback(() => {
     if (probeData && entry) {
       exportProbeAsSvg(
         probeData,
-        { zoom: view.zoom, panX: view.panX, panY: view.panY },
+        { zoom: view.zoom, viewCenterX: view.viewCenterX, viewCenterY: view.viewCenterY },
         { width: canvasSize.width, height: canvasSize.height },
         `${entry.id}.svg`,
         view.showScaleBar
       );
     }
-  }, [probeData, entry, view.zoom, view.panX, view.panY, canvasSize.width, canvasSize.height, view.showScaleBar]);
+  }, [probeData, entry, view.zoom, view.viewCenterX, view.viewCenterY, canvasSize.width, canvasSize.height, view.showScaleBar]);
 
   const [shareCopied, setShareCopied] = useState(false);
   const handleShareView = useCallback(() => {
@@ -139,6 +139,7 @@ export function ProbeViewer() {
 
     const width = Math.max(10, maxX - minX);
     const height = Math.max(10, maxY - minY);
+    const centerX = minX + width / 2;
     const aspectRatio = height / width;
 
     const TALL_THRESHOLD = 10;
@@ -149,31 +150,25 @@ export function ProbeViewer() {
       const initialZoom = aspectRatio * TARGET_WIDTH_FRACTION;
       setZoom(initialZoom);
 
-      // Calculate pan to show the bottom of the probe
-      // Canvas projection: screenY = -(probeY - centerY) * scale + height/2 + panY
-      // minY (probe base) maps to screen bottom, maxY (probe tip) maps to screen top
-      // To show the base, we need to shift the view down (negative panY)
+      // Set view center to show the bottom (base) of the probe
+      // We want minY (probe base) to appear near bottom of viewport
+      // Calculate the Y coordinate that should be at screen center
       const mainPadding = 40;
       const mainAvailW = Math.max(10, canvasSize.width - mainPadding * 2);
       const mainAvailH = Math.max(10, canvasSize.height - mainPadding * 2);
       const mainBaseScale = Math.min(mainAvailW / width, mainAvailH / height);
       const mainScale = mainBaseScale * initialZoom;
 
-      // At panY=0, probe center is at screen center
-      // screenY of minY = -(minY - centerY) * scale + height/2 = (centerY - minY) * scale + height/2
-      // We want minY to appear near bottom of viewport (with margin)
-      // Target screenY for minY = height - margin
-      // So: (centerY - minY) * scale + height/2 + panY = height - margin
-      // panY = height - margin - height/2 - (centerY - minY) * scale
-      // panY = height/2 - margin - (height/2) * scale  (since centerY - minY = height/2)
-      const probeHalfHeightScreen = (height / 2) * mainScale;
-      const initialPanY = canvasSize.height / 2 - mainPadding - probeHalfHeightScreen;
+      // How much of probe height fits in the viewport?
+      const viewportHeightInProbeUnits = (canvasSize.height - mainPadding * 2) / mainScale;
+      // Center the view so minY is near the bottom edge
+      const initialViewCenterY = minY + viewportHeightInProbeUnits / 2;
 
-      setPan(0, initialPanY);
+      setViewCenter(centerX, initialViewCenterY);
     }
 
     lastSmartZoomProbeId.current = selectedProbeId;
-  }, [probeData, selectedProbeId, setZoom, setPan, canvasSize.width, canvasSize.height]);
+  }, [probeData, selectedProbeId, setZoom, setViewCenter, canvasSize.width, canvasSize.height]);
 
   if (manifestStatus === "loading") {
     return (
@@ -297,22 +292,22 @@ export function ProbeViewer() {
               entry={entry}
               probeData={probeData}
               zoom={view.zoom}
-              panX={view.panX}
-              panY={view.panY}
+              viewCenterX={view.viewCenterX}
+              viewCenterY={view.viewCenterY}
               showContactIds={view.showContactIds}
               showScaleBar={view.showScaleBar}
-              onPan={(nextX, nextY) => setPan(nextX, nextY)}
+              onViewCenterChange={(x, y) => setViewCenter(x, y)}
               onZoom={(value) => setZoom(value)}
             />
             {view.showOverview && (
               <ProbeOverview
                 probeData={probeData}
                 zoom={view.zoom}
-                panX={view.panX}
-                panY={view.panY}
+                viewCenterX={view.viewCenterX}
+                viewCenterY={view.viewCenterY}
                 mainWidth={canvasSize.width}
                 mainHeight={canvasSize.height}
-                onPan={(nextX, nextY) => setPan(nextX, nextY)}
+                onViewCenterChange={(x, y) => setViewCenter(x, y)}
               />
             )}
           </>

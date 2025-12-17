@@ -2,8 +2,8 @@ import type { ProbeInterfaceFile, ContactShapeParams } from "../types/probe";
 
 interface ExportViewState {
   zoom: number;
-  panX: number;
-  panY: number;
+  viewCenterX: number | null;
+  viewCenterY: number | null;
 }
 
 interface CanvasSize {
@@ -127,8 +127,12 @@ function renderProbeToContext(
   const probe = probeData.probes?.[0];
   if (!geometry || !probe) return;
 
-  const { zoom, panX, panY } = viewState;
+  const { zoom, viewCenterX, viewCenterY } = viewState;
   const { width: widthPx, height: heightPx } = canvasSize;
+
+  // Calculate effective view center (use geometry center if null)
+  const effectiveViewCenterX = viewCenterX ?? geometry.centerX;
+  const effectiveViewCenterY = viewCenterY ?? geometry.centerY;
 
   const padding = 40;
   const availableWidth = Math.max(10, widthPx - padding * 2);
@@ -138,6 +142,10 @@ function renderProbeToContext(
     availableHeight / geometry.height
   );
   const scale = baseScale * zoom;
+
+  // Calculate pixel pan from view center
+  const panX = (geometry.centerX - effectiveViewCenterX) * scale;
+  const panY = (effectiveViewCenterY - geometry.centerY) * scale;
 
   const offsetX = widthPx / 2 + panX;
   const offsetY = heightPx / 2 + panY;
@@ -311,8 +319,12 @@ function generateProbeSvgString(
     return `<svg xmlns="http://www.w3.org/2000/svg" width="${canvasSize.width}" height="${canvasSize.height}"></svg>`;
   }
 
-  const { zoom, panX, panY } = viewState;
+  const { zoom, viewCenterX, viewCenterY } = viewState;
   const { width: widthPx, height: heightPx } = canvasSize;
+
+  // Calculate effective view center (use geometry center if null)
+  const effectiveViewCenterX = viewCenterX ?? geometry.centerX;
+  const effectiveViewCenterY = viewCenterY ?? geometry.centerY;
 
   const padding = 40;
   const availableWidth = Math.max(10, widthPx - padding * 2);
@@ -322,6 +334,10 @@ function generateProbeSvgString(
     availableHeight / geometry.height
   );
   const scale = baseScale * zoom;
+
+  // Calculate pixel pan from view center
+  const panX = (geometry.centerX - effectiveViewCenterX) * scale;
+  const panY = (effectiveViewCenterY - geometry.centerY) * scale;
 
   const offsetX = widthPx / 2 + panX;
   const offsetY = heightPx / 2 + panY;

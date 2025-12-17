@@ -21,11 +21,11 @@ interface ProbeCanvasProps {
   entry: ManifestEntry;
   probeData: ProbeInterfaceFile;
   zoom: number;
-  panX: number;
-  panY: number;
+  viewCenterX: number | null;  // probe coordinates (µm), null = geometry center
+  viewCenterY: number | null;
   showContactIds: boolean;
   showScaleBar: boolean;
-  onPan: (x: number, y: number) => void;
+  onViewCenterChange: (x: number | null, y: number | null) => void;
   onZoom: (zoom: number) => void;
 }
 
@@ -81,11 +81,11 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
       entry,
       probeData,
       zoom,
-      panX,
-      panY,
+      viewCenterX,
+      viewCenterY,
       showContactIds,
       showScaleBar,
-      onPan,
+      onViewCenterChange,
       onZoom,
     },
     ref
@@ -96,10 +96,14 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
   useImperativeHandle(ref, () => canvasRef.current!, []);
   const { ref: containerRef, size } = useResizeObserver<HTMLDivElement>();
   const [isDragging, setIsDragging] = useState(false);
-  const dragOriginRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
+  const dragOriginRef = useRef<{ x: number; y: number; viewCenterX: number; viewCenterY: number } | null>(null);
 
   const geometry = useMemo(() => computeGeometrySummary(probeData), [probeData]);
   const probe = useMemo(() => probeData.probes?.[0], [probeData]);
+
+  // Calculate effective view center (use geometry center if null)
+  const effectiveViewCenterX = viewCenterX ?? geometry?.centerX ?? 0;
+  const effectiveViewCenterY = viewCenterY ?? geometry?.centerY ?? 0;
 
   useEffect(() => {
     if (!canvasRef.current || !size.width || !size.height || !geometry || !probe) {
@@ -131,6 +135,10 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
       availableHeight / geometry.height,
     );
     const scale = baseScale * zoom;
+
+    // Calculate pixel pan from view center in probe coordinates
+    const panX = (geometry.centerX - effectiveViewCenterX) * scale;
+    const panY = (effectiveViewCenterY - geometry.centerY) * scale;
 
     const offsetX = widthPx / 2 + panX;
     const offsetY = heightPx / 2 + panY;
@@ -314,16 +322,30 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
     if (showScaleBar) {
       renderScaleBar();
     }
-  }, [entry.id, geometry, panX, panY, probe, probeData, showContactIds, showScaleBar, size.height, size.width, zoom]);
+  }, [entry.id, effectiveViewCenterX, effectiveViewCenterY, geometry, probe, probeData, showContactIds, showScaleBar, size.height, size.width, zoom]);
 
   const clampZoom = useCallback(
     (value: number) => Math.min(VIEW_ZOOM_MAX, Math.max(VIEW_ZOOM_MIN, value)),
     [],
   );
 
+  // Helper to calculate scale (needed for coordinate conversion in handlers)
+  const getScale = useCallback(() => {
+    if (!size.width || !size.height || !geometry) return 1;
+    const padding = 40;
+    const availableWidth = Math.max(10, size.width - padding * 2);
+    const availableHeight = Math.max(10, size.height - padding * 2);
+    const baseScale = Math.min(
+      availableWidth / geometry.width,
+      availableHeight / geometry.height,
+    );
+    return baseScale * zoom;
+  }, [geometry, size.width, size.height, zoom]);
+
   const handleWheel = useCallback(
     (event: ReactWheelEvent<HTMLCanvasElement>) => {
       event.preventDefault();
+      if (!geometry) return;
 
       // Get mouse position relative to canvas
       const canvas = canvasRef.current;
@@ -333,12 +355,17 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
       const mouseY = event.clientY - rect.top;
 
       // Canvas center
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
+      const canvasCenterX = rect.width / 2;
+      const canvasCenterY = rect.height / 2;
 
       // Mouse offset from center (in screen pixels)
-      const offsetFromCenterX = mouseX - centerX;
-      const offsetFromCenterY = mouseY - centerY;
+      const offsetFromCenterX = mouseX - canvasCenterX;
+      const offsetFromCenterY = mouseY - canvasCenterY;
+
+      // Calculate scale and pan in pixels
+      const scale = getScale();
+      const panX = (geometry.centerX - effectiveViewCenterX) * scale;
+      const panY = (effectiveViewCenterY - geometry.centerY) * scale;
 
       // Calculate new zoom
       const zoomFactor = Math.exp(-event.deltaY * 0.002);
@@ -346,17 +373,18 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
       const actualZoomFactor = nextZoom / zoom;
 
       // Adjust pan so the point under the mouse stays fixed
-      // The point under mouse in current view: (panX + offsetFromCenterX, panY + offsetFromCenterY)
-      // After zoom, we want the same world point under mouse, so:
-      // newPanX + offsetFromCenterX = (panX + offsetFromCenterX) * actualZoomFactor
-      // newPanX = panX * actualZoomFactor + offsetFromCenterX * (actualZoomFactor - 1)
       const newPanX = panX * actualZoomFactor + offsetFromCenterX * (actualZoomFactor - 1);
       const newPanY = panY * actualZoomFactor + offsetFromCenterY * (actualZoomFactor - 1);
 
-      onPan(newPanX, newPanY);
+      // Convert back to probe coordinates
+      const newScale = scale * actualZoomFactor;
+      const newViewCenterX = geometry.centerX - newPanX / newScale;
+      const newViewCenterY = geometry.centerY + newPanY / newScale;
+
+      onViewCenterChange(newViewCenterX, newViewCenterY);
       onZoom(nextZoom);
     },
-    [clampZoom, onPan, onZoom, panX, panY, zoom],
+    [clampZoom, effectiveViewCenterX, effectiveViewCenterY, geometry, getScale, onViewCenterChange, onZoom, zoom],
   );
 
   const handlePointerDown = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
@@ -365,11 +393,11 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
     dragOriginRef.current = {
       x: event.clientX,
       y: event.clientY,
-      panX,
-      panY,
+      viewCenterX: effectiveViewCenterX,
+      viewCenterY: effectiveViewCenterY,
     };
     (event.target as HTMLCanvasElement).setPointerCapture(event.pointerId);
-  }, [panX, panY]);
+  }, [effectiveViewCenterX, effectiveViewCenterY]);
 
   const handlePointerMove = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (!isDragging || !dragOriginRef.current) {
@@ -378,8 +406,14 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
     event.preventDefault();
     const deltaX = event.clientX - dragOriginRef.current.x;
     const deltaY = event.clientY - dragOriginRef.current.y;
-    onPan(dragOriginRef.current.panX + deltaX, dragOriginRef.current.panY + deltaY);
-  }, [isDragging, onPan]);
+
+    // Convert pixel delta to probe coordinate delta
+    const scale = getScale();
+    const newViewCenterX = dragOriginRef.current.viewCenterX - deltaX / scale;
+    const newViewCenterY = dragOriginRef.current.viewCenterY + deltaY / scale;
+
+    onViewCenterChange(newViewCenterX, newViewCenterY);
+  }, [getScale, isDragging, onViewCenterChange]);
 
   const handlePointerUp = useCallback((event: ReactPointerEvent<HTMLCanvasElement>) => {
     if (isDragging) {
@@ -393,6 +427,7 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
   const handleDoubleClick = useCallback(
     (event: ReactMouseEvent<HTMLCanvasElement>) => {
       event.preventDefault();
+      if (!geometry) return;
 
       // Get click position relative to canvas
       const canvas = canvasRef.current;
@@ -402,12 +437,17 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
       const mouseY = event.clientY - rect.top;
 
       // Canvas center
-      const centerX = rect.width / 2;
-      const centerY = rect.height / 2;
+      const canvasCenterX = rect.width / 2;
+      const canvasCenterY = rect.height / 2;
 
       // Mouse offset from center
-      const offsetFromCenterX = mouseX - centerX;
-      const offsetFromCenterY = mouseY - centerY;
+      const offsetFromCenterX = mouseX - canvasCenterX;
+      const offsetFromCenterY = mouseY - canvasCenterY;
+
+      // Calculate scale and pan in pixels
+      const scale = getScale();
+      const panX = (geometry.centerX - effectiveViewCenterX) * scale;
+      const panY = (effectiveViewCenterY - geometry.centerY) * scale;
 
       // Calculate new zoom
       const zoomFactor = event.shiftKey ? 1 / 1.5 : 1.5;
@@ -418,10 +458,15 @@ export const ProbeCanvas = forwardRef<HTMLCanvasElement, ProbeCanvasProps>(
       const newPanX = panX * actualZoomFactor + offsetFromCenterX * (actualZoomFactor - 1);
       const newPanY = panY * actualZoomFactor + offsetFromCenterY * (actualZoomFactor - 1);
 
-      onPan(newPanX, newPanY);
+      // Convert back to probe coordinates
+      const newScale = scale * actualZoomFactor;
+      const newViewCenterX = geometry.centerX - newPanX / newScale;
+      const newViewCenterY = geometry.centerY + newPanY / newScale;
+
+      onViewCenterChange(newViewCenterX, newViewCenterY);
       onZoom(nextZoom);
     },
-    [clampZoom, onPan, onZoom, panX, panY, zoom],
+    [clampZoom, effectiveViewCenterX, effectiveViewCenterY, geometry, getScale, onViewCenterChange, onZoom, zoom],
   );
 
   return (
