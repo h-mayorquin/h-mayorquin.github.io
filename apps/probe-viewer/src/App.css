@@ -141,7 +141,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1rem;
   max-width: 960px;
   width: 100%;
   background: rgba(255, 255, 255, 0.95);
@@ -182,6 +182,9 @@
 }
 
 .viewer-controls button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font: inherit;
   padding: 0.45rem 0.9rem;
   border-radius: 0.75rem;
