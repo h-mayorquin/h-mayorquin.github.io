@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import { useResizeObserver } from "../hooks/useResizeObserver";
 import { useAppStore, VIEW_ZOOM_MAX, VIEW_ZOOM_MIN } from "../state/useAppStore";
@@ -87,6 +87,14 @@ export function ProbeViewer() {
       );
     }
   }, [probeData, entry, view.zoom, view.panX, view.panY, canvasSize.width, canvasSize.height, view.showScaleBar]);
+
+  const [shareCopied, setShareCopied] = useState(false);
+  const handleShareView = useCallback(() => {
+    navigator.clipboard.writeText(window.location.href).then(() => {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    });
+  }, []);
 
   const lastResetProbeId = useRef<string | undefined>(undefined);
 
@@ -206,7 +214,7 @@ export function ProbeViewer() {
             type="button"
             className="viewer-download"
             onClick={handleExportPng}
-            title="Export current view as PNG (white background). Toggle 'Scale bar' below to include it in the export."
+            title="Export current view as PNG (white background). If scale bar is enabled, it will be included."
           >
             Export PNG
           </button>
@@ -214,19 +222,18 @@ export function ProbeViewer() {
             type="button"
             className="viewer-download"
             onClick={handleExportSvg}
-            title="Export current view as SVG (transparent background). Toggle 'Scale bar' below to include it in the export."
+            title="Export current view as SVG (transparent background). If scale bar is enabled, it will be included."
           >
             Export SVG
           </button>
-          <a
+          <button
+            type="button"
             className="viewer-download"
-            href={entry.jsonUrl}
-            target="_blank"
-            rel="noreferrer"
-            title="Download the probeinterface JSON file with raw geometry data"
+            onClick={handleShareView}
+            title="Copy link to current view"
           >
-            Download JSON
-          </a>
+            {shareCopied ? "Link Copied!" : "Share View"}
+          </button>
         </div>
       </header>
 
@@ -344,6 +351,15 @@ export function ProbeViewer() {
               {probeData.specification} · v{probeData.version}
             </span>
           )}
+          <a
+            className="viewer-download"
+            href={entry.jsonUrl}
+            target="_blank"
+            rel="noreferrer"
+            title="Download the probeinterface JSON file"
+          >
+            Download
+          </a>
         </div>
         {status === "loading" && <p>Fetching probe data…</p>}
         {status === "error" && (

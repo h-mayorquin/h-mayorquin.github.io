@@ -1,8 +1,9 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import {
   useLocation,
   useNavigate,
   useParams,
+  useSearchParams,
 } from "react-router-dom";
 
 import { ProbeViewer } from "./components/ProbeViewer";
@@ -12,10 +13,16 @@ import "./App.css";
 
 const DEFAULT_PROBE_ID = "plexon:8S1024";
 
+function roundForUrl(value: number, decimals = 1): number {
+  const factor = Math.pow(10, decimals);
+  return Math.round(value * factor) / factor;
+}
+
 function App() {
   const { manufacturer, model } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const manifestStatus = useAppStore((state) => state.manifestStatus);
   const manifest = useAppStore((state) => state.manifest);
@@ -23,9 +30,66 @@ function App() {
   const loadManifest = useAppStore((state) => state.loadManifest);
   const selectProbe = useAppStore((state) => state.selectProbe);
 
+  const view = useAppStore((state) => state.view);
+  const setZoom = useAppStore((state) => state.setZoom);
+  const setPan = useAppStore((state) => state.setPan);
+
   useEffect(() => {
     void loadManifest();
   }, [loadManifest]);
+
+  // Track whether we've initialized from URL to avoid overwriting on first render
+  const initializedFromUrl = useRef(false);
+
+  // Read view params from URL on initial load
+  useEffect(() => {
+    if (initializedFromUrl.current) return;
+    initializedFromUrl.current = true;
+
+    const zoomParam = searchParams.get("zoom");
+    const xParam = searchParams.get("x");
+    const yParam = searchParams.get("y");
+
+    if (zoomParam) {
+      const zoom = parseFloat(zoomParam);
+      if (!isNaN(zoom)) setZoom(zoom);
+    }
+    if (xParam && yParam) {
+      const x = parseFloat(xParam);
+      const y = parseFloat(yParam);
+      if (!isNaN(x) && !isNaN(y)) setPan(x, y);
+    }
+  }, [searchParams, setZoom, setPan]);
+
+  // Debounced URL update when view state changes
+  const updateUrlTimeout = useRef<ReturnType<typeof setTimeout>>();
+  const updateSearchParams = useCallback(() => {
+    const { zoom, panX, panY } = view;
+    const isDefault = zoom === 1 && panX === 0 && panY === 0;
+
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (isDefault) {
+        next.delete("zoom");
+        next.delete("x");
+        next.delete("y");
+      } else {
+        next.set("zoom", String(roundForUrl(zoom, 2)));
+        next.set("x", String(roundForUrl(panX, 0)));
+        next.set("y", String(roundForUrl(panY, 0)));
+      }
+      return next;
+    }, { replace: true });
+  }, [view, setSearchParams]);
+
+  useEffect(() => {
+    if (!initializedFromUrl.current) return;
+
+    clearTimeout(updateUrlTimeout.current);
+    updateUrlTimeout.current = setTimeout(updateSearchParams, 300);
+
+    return () => clearTimeout(updateUrlTimeout.current);
+  }, [view.zoom, view.panX, view.panY, updateSearchParams]);
 
   const manifestById = useMemo(() => {
     const map = new Map<string, typeof manifest[number]>();

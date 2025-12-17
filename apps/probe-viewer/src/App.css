@@ -322,8 +322,8 @@
 .viewer-json-header {
   display: flex;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 0.75rem;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
 }
 
 .viewer-json-header h3 {
@@ -334,6 +334,12 @@
 .viewer-json-meta {
   font-size: 0.85rem;
   color: #475569;
+}
+
+.viewer-json-header .viewer-download {
+  margin-left: auto;
+  font-size: 0.85rem;
+  padding: 0.25rem 0.6rem;
 }
 
 .viewer-json {
