@@ -100,7 +100,14 @@ export function ProbeViewer() {
 
   useEffect(() => {
     if (selectedProbeId && lastResetProbeId.current !== selectedProbeId) {
-      resetView();
+      // Get current view state directly from store (not stale closure value)
+      // This is critical because App.tsx's URL effect may have updated the store
+      // after this component rendered but before this effect runs
+      const currentView = useAppStore.getState().view;
+      const hasUrlViewState = currentView.zoom !== 1 || currentView.viewCenterX !== null || currentView.viewCenterY !== null;
+      if (!hasUrlViewState) {
+        resetView();
+      }
       lastResetProbeId.current = selectedProbeId;
     }
     if (!selectedProbeId) {
@@ -117,6 +124,14 @@ export function ProbeViewer() {
     if (lastSmartZoomProbeId.current === selectedProbeId) return;
     // Wait for canvas size to be available
     if (canvasSize.width === 0 || canvasSize.height === 0) return;
+
+    // Get current view state directly from store (not stale closure value)
+    const currentView = useAppStore.getState().view;
+    const hasUrlViewState = currentView.zoom !== 1 || currentView.viewCenterX !== null || currentView.viewCenterY !== null;
+    if (hasUrlViewState) {
+      lastSmartZoomProbeId.current = selectedProbeId;
+      return;
+    }
 
     const probe = probeData.probes?.[0];
     if (!probe) return;
