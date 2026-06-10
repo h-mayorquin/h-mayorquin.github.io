@@ -27,24 +27,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: apps/probe-viewer/package-lock.json
-
-      - name: Build probe-viewer
-        run: uv run scripts/build_probe_viewer.py
-
       - name: Prepare deployment
         run: |
           mkdir -p _site
@@ -62,12 +44,11 @@ jobs:
           cp -r files _site/ 2>/dev/null || true
           cp -r notebooks _site/ 2>/dev/null || true
 
-          # Copy apps (static apps + built probe-viewer)
+          # Copy apps
           mkdir -p _site/apps
           cp apps/index.html _site/apps/ 2>/dev/null || true
           cp -r apps/dimension-order-visualizer _site/apps/ 2>/dev/null || true
           cp -r apps/templates-visualizer _site/apps/ 2>/dev/null || true
-          cp -r apps/probe-viewer/dist _site/apps/probe-viewer/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
